@@ -38,6 +38,7 @@ class User(Base):
     token = relationship("Token", back_populates="user")
     created_groups = relationship("Group", back_populates="creator", foreign_keys=["groups.creator_id"])
     groups = relationship("Group", secondary=band_members, back_populates="users")
+    duties = relationship("Duty", back_populates="attendant")
 
     def set_password(self, password: str) -> None:
         self.hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
