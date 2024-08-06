@@ -1,0 +1,7 @@
+alembic init migrations
+
+alembic revision --autogenerate -m "DataBase creation"
+
+alembic upgrade 998d779619ad
+
+uvicorn main:app --reload
