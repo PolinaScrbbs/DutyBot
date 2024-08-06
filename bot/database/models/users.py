@@ -1,8 +1,8 @@
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import DateTime, ForeignKey, Integer, String, func, Enum
-from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table
+from sqlalchemy.orm import relationship, DeclarativeBase
 from enum import Enum as BaseEnum
 from ...config import SECRET_KEY
 
@@ -14,23 +14,30 @@ class Role(BaseEnum):
     ELDER = "Староста"
     STUDENT = "Студент"
 
+band_members = Table(
+    'band_members',
+    Base.metadata,
+    Column('group_id', Integer, ForeignKey('group.id'), primary_key=True),
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True)
+)
+
 class User(Base):
     __tablename__ = 'users'
 
-    id = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(1024), nullable=False)
-    role = mapped_column(Enum(Role), default=Role.STUDENT, nullable=False)
-    name: Mapped[str] = mapped_column(String(64), nullable=False)
-    surname: Mapped[str] = mapped_column(String(64), nullable=False)
-    patronymic: Mapped[str] = mapped_column(String(64), nullable=False)
-    # email: Mapped[str] = mapped_column(String(40), default=None, unique=True, nullable=True)
-    # phone_number: Mapped[str] = mapped_column(CHAR(15), unique=True, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(True), server_default=func.now())
-    is_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
-    mailing_consent: Mapped[bool] = mapped_column(default=False, nullable=False)
+    id = Column(Integer, primary_key=True)
+    username = Column(String(32), unique=True, nullable=False)
+    hashed_password = Column(String(1024), nullable=False)
+    role = Column(Enum(Role), default=Role.STUDENT, nullable=False)
+    name = Column(String(64), nullable=False)
+    surname = Column(String(64), nullable=False)
+    patronymic = Column(String(64), nullable=False)
+    created_at = Column(DateTime(True), server_default=func.now())
+    is_verified = Column(Boolean, default=False, nullable=False)
+    mailing_consent = Column(Boolean, default=False, nullable=False)
 
-    token: Mapped["Token"] = relationship("Token", back_populates="user")
+    token = relationship("Token", back_populates="user")
+    created_groups = relationship("Group", back_populates="creator", foreign_keys=["groups.creator_id"])
+    groups = relationship("Group", secondary=band_members, back_populates="users")
 
     def set_password(self, password: str) -> None:
         self.hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -82,8 +89,8 @@ class User(Base):
 class Token(Base):
     __tablename__ = "tokens"
 
-    id = mapped_column(Integer, primary_key=True)
-    token: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
-    user_id = mapped_column(Integer, ForeignKey("users.id"))
+    id = Column(Integer, primary_key=True)
+    token = Column(String(256), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
 
-    user: Mapped["User"] = relationship("User", back_populates="token")
+    user = relationship("User", back_populates="token")
