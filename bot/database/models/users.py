@@ -1,10 +1,10 @@
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table, CheckConstraint
+from sqlalchemy.orm import relationship, DeclarativeBase, validates
 from enum import Enum as BaseEnum
-from ...config import SECRET_KEY
+from config import SECRET_KEY
 
 class Base(DeclarativeBase):
     pass
@@ -17,7 +17,7 @@ class Role(BaseEnum):
 band_members = Table(
     'band_members',
     Base.metadata,
-    Column('group_id', Integer, ForeignKey('group.id'), primary_key=True),
+    Column('group_id', Integer, ForeignKey('groups.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True)
 )
 
@@ -32,13 +32,15 @@ class User(Base):
     surname = Column(String(64), nullable=False)
     patronymic = Column(String(64), nullable=False)
     created_at = Column(DateTime(True), server_default=func.now())
-    is_verified = Column(Boolean, default=False, nullable=False)
-    mailing_consent = Column(Boolean, default=False, nullable=False)
+    # is_verified = Column(Boolean, default=False, nullable=False)
+    # mailing_consent = Column(Boolean, default=False, nullable=False)
 
-    token = relationship("Token", back_populates="user")
-    created_groups = relationship("Group", back_populates="creator", foreign_keys=["groups.creator_id"])
+    tokens = relationship("Token", back_populates="user")
+
+    created_groups = relationship("Group", back_populates="creator", foreign_keys="[Group.creator_id]")
     groups = relationship("Group", secondary=band_members, back_populates="users")
-    duties = relationship("Duty", back_populates="attendant")
+
+    duties = relationship("Duty", back_populates="attendant") 
 
     def set_password(self, password: str) -> None:
         self.hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -69,24 +71,7 @@ class User(Base):
             raise Exception("Токен истек")
         except jwt.InvalidTokenError:
             raise Exception("Неверный токен")
-        
-    # def get_inventory_items(self):
-    #     inventory = self.inventory
 
-    #     if inventory:
-    #         items = inventory.items
-
-    #         item_counts = {}
-    #         for item in items:
-    #             if item.title in item_counts:
-    #                 item_counts[item.title] += 1
-    #             else:
-    #                 item_counts[item.title] = 1
-
-    #         return item_counts
-    #     else:
-    #         return {}
-        
 class Token(Base):
     __tablename__ = "tokens"
 
@@ -94,4 +79,56 @@ class Token(Base):
     token = Column(String(256), unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
 
-    user = relationship("User", back_populates="token")
+    user = relationship("User", back_populates="tokens")
+
+class Department(BaseEnum):
+    ECONOMIST = "Экономист"
+    INFORMATION_SYSTEMS_SPECIALIST = "Специалист по ИС"
+    WEB_DEVELOPER = "WEB-разработчик"
+    LANDSCAPE_DESIGNER = "Ландшафтный дизайнер"
+    LIGHT_INDUSTRY_WORKER = "Рабочий легкой промышленности"
+    HAIRDRESSER = "Парикмахер"
+    COSMETOLOGIST = "Косметолог"
+    DESIGNER = "Дизайнер"
+    FIRE_FIGHTER = "Пожарный"
+    BUILDER = "Строитель"
+    BIM_SPECIALIST = "BIM-специалист"
+    BANKER = "Банкир"
+    FINANCIER = "Финансист"
+    WELDER = "Сварщик"
+    BAKER_PASTRY_CHEF = "Пекарь-кондитер"
+    INDUSTRIAL_FURNITURE_DESIGNER = "Промышленный дизайнер мебели"
+    INTERIOR_DESIGNER = "Дизайнер интерьера"
+    GENERAL_CONSTRUCTION_WORKER = "Общестроительный рабочий"
+    ATOMIC_ENGINEER = "Атомщик"
+
+class Group(Base):
+    __tablename__ = 'groups'
+    id = Column(Integer, primary_key=True)
+    title = Column(String(32), unique=True, nullable=False)
+    department = Column(Enum(Department), nullable=False)
+    course_number = Column(Integer, nullable=False)
+    creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    created_at = Column(DateTime(True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint('course_number >= 1 AND course_number <= 4', name='course_number_range'),
+    )
+
+    @validates('course_number')
+    def validate_course_number(self, key, value):
+        if not (1 <= value <= 4):
+            raise ValueError("Номер курса должен быть от 1 до 4")
+        return value
+
+    creator = relationship("User", back_populates="created_groups")
+    users = relationship("User", secondary=band_members, back_populates="groups")
+
+class Duty(Base):
+    __tablename__ = 'duties'
+
+    id = Column(Integer, primary_key=True)
+    attendant_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime(True), server_default=func.now())
+
+    attendant = relationship("User", back_populates="duties")
