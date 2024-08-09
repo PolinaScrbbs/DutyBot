@@ -5,14 +5,17 @@ from aiogram.utils import markdown
 
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload, joinedload
 
 import app.keyboards as kb
 import app.states as st
-from . import User, Token
+from . import User, Token, Role, Specialization
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
 import database.response as rq
 
+import logging
+logging.basicConfig(level=logging.INFO)
 
 router = Router()
 
@@ -22,14 +25,26 @@ async def cmd_start(message: Message):
     session = await get_async_session()
     try:
         result = await session.execute(
-            select(User).filter(User.username == message.from_user.username)
+            select(User)
+            .where(User.username == message.from_user.username)
+            .options(selectinload(User.created_group), selectinload(User.tokens))
         )
-        user = result.scalar_one_or_none()
+        user = result.unique().scalar_one_or_none()
+        
+        msg = 'Привет👋\nВыбери пункт из меню🔍'
+        keyboard = kb.start
+
         if user:
-            user.get_token()
-            await message.answer(f'С возвращением👋\nВыбери пункт из меню🔍', reply_markup=kb.start)
+            if user.get_token():
+                msg = 'С возвращением👋\nВыбери пункт из меню🔍'
+                print(user.created_group)
+                if user.created_group == []:
+                    keyboard = kb.ungroup_main
+                else:
+                    keyboard = kb.main
+            await message.answer(msg, reply_markup=keyboard)
         else:
-            await message.answer(f'Привет👋\nВыбери пункт из меню🔍', reply_markup=kb.start)
+            await message.answer(msg, reply_markup=keyboard)
     finally:
         await session.close()
 
@@ -91,6 +106,7 @@ async def registration(message: Message, state: FSMContext):
         await message.answer(f'❌*Ошибка3:* {str(e)}', parse_mode="Markdown", reply_markup=kb.start)
 
     finally:
+        await session.close()
         await state.clear()
 
 
@@ -107,25 +123,105 @@ async def authorazation(message: Message, state: FSMContext):
     login = message.from_user.username
     password = message.text
     
-
     try:
         session = await get_async_session()
         result = await session.execute(
                 select(User).filter(User.username == login)
+                .options(selectinload(User.groups))
             )
         user = result.scalar_one_or_none()
         
+        keyboard = kb.main
+
         if user and user.check_password(password):
             token = user.generate_token()
             token = Token(user_id=user.id, token=token)
             session.add(token)
             await session.commit()
 
-            await message.answer(f"*@{message.from_user.username}*, авторизация завершена ✌️", parse_mode="Markdown")
+            if not user.groups:
+                keyboard = kb.ungroup_main
+
+            await message.answer(f"*@{message.from_user.username}*, авторизация завершена ✌️", parse_mode="Markdown", reply_markup=keyboard)
         else:
             await message.answer("❌ Неверный логин или пароль")
 
     except Exception as e:
         await message.answer(f'❌Ошибка авторизации {e}')
     finally:
+        await session.close()
         await state.clear()
+
+
+#Создание группы============================================================================================================
+
+
+@router.message(lambda message: message.text == "Создать группу")
+async def group_create(message: Message, state: FSMContext):
+    session = await get_async_session()
+    tg_username = message.from_user.username
+    try:
+        result = await session.execute(
+            select(User)
+            .where(User.username == tg_username)
+            .options(selectinload(User.created_group), selectinload(User.tokens)))
+        
+        user = result.unique().scalar_one_or_none()
+
+        if not user:
+            await message.answer(f'Пользователь @{tg_username} не найден, пройдите регистрацию', reply_markup=kb.start)
+
+        elif user.tokens is None:
+            await message.answer(f'Пройдите авторизацию', reply_markup=kb.start)
+
+        elif user.role is Role.ELDER:
+            if user.created_group == []:
+                await message.answer(f'Введите название группы (Не номер)')
+                await state.set_state(st.GroupCreate.title)
+            else:
+                await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.main)
+        else:
+            await message.answer(f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время', reply_markup=kb.ungroup_main)
+
+    finally:
+        await session.close()
+
+@router.message(st.GroupCreate.title)
+async def group_title(message: Message, state: FSMContext):
+    await state.update_data(creator=message.from_user.username)
+    await state.update_data(title=message.text)
+    
+    await message.answer('Выберите свою специальность', reply_markup=kb.specializations)
+
+@router.callback_query(lambda query: query.data.startswith('spec_'))
+async def group_specialization(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete_reply_markup()
+
+    specialization = callback.data.split('_', 1)[1]
+    await callback.message.edit_text(f'Вы выбрали *{specialization}*', parse_mode='Markdown')
+    await state.update_data(specialization=specialization)
+
+    await callback.message.answer('Выберите свой курс обучения', reply_markup=kb.course_number)
+
+@router.callback_query(lambda query: query.data.startswith('course_number_'))
+async def group_course_number(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete_reply_markup()
+
+    course_number = int(callback.data.split('_')[2])
+    await callback.message.edit_text(f'Вы выбрали *{course_number} курс*', parse_mode='Markdown')
+
+    session= await get_async_session()
+    data = await state.get_data()
+    title = data["title"]
+    specialization = await rq.get_specialization(data["specialization"])
+    username = data["creator"]
+
+    group = await rq.create_group(session, title, specialization, course_number, username)
+
+    if group:
+        await callback.message.answer(text=f'Группа *{group.title}* для *{group.course_number}* курса создана. Староста *@{username}*', parse_mode='Markdown' ,reply_markup=kb.main)
+
+@router.callback_query(F.data == 'cancel')
+async def clear(callback:CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text('✅Отменено')

@@ -8,3 +8,6 @@ class Registration(StatesGroup):
 class Auth(StatesGroup):
     login = State()
     password = State()
+
+class GroupCreate(StatesGroup):
+    title = State()

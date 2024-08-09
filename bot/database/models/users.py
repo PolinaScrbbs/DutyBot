@@ -2,7 +2,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table, CheckConstraint
-from sqlalchemy.orm import relationship, DeclarativeBase, validates
+from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
 from enum import Enum as BaseEnum
 from config import SECRET_KEY
 
@@ -37,7 +37,7 @@ class User(Base):
 
     tokens = relationship("Token", back_populates="user")
 
-    created_groups = relationship("Group", back_populates="creator", foreign_keys="[Group.creator_id]")
+    created_group = relationship("Group", back_populates="creator")
     groups = relationship("Group", secondary=band_members, back_populates="users")
 
     duties = relationship("Duty", back_populates="attendant") 
@@ -56,7 +56,7 @@ class User(Base):
         return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
     def get_token(self) -> "Token":
-        return self.tokens
+        return self.tokens[0] if self.tokens else None
 
     def delete_token(self, token_id: int) -> None:
         token_to_delete = next((token for token in self.tokens if token.id == token_id), None)
@@ -81,7 +81,7 @@ class Token(Base):
 
     user = relationship("User", back_populates="tokens")
 
-class Department(BaseEnum):
+class Specialization(BaseEnum):
     ECONOMIST = "Экономист"
     INFORMATION_SYSTEMS_SPECIALIST = "Специалист по ИС"
     WEB_DEVELOPER = "WEB-разработчик"
@@ -106,7 +106,7 @@ class Group(Base):
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
     title = Column(String(32), unique=True, nullable=False)
-    department = Column(Enum(Department), nullable=False)
+    specialization = Column(Enum(Specialization), nullable=False)
     course_number = Column(Integer, nullable=False)
     creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     created_at = Column(DateTime(True), server_default=func.now())
@@ -121,7 +121,7 @@ class Group(Base):
             raise ValueError("Номер курса должен быть от 1 до 4")
         return value
 
-    creator = relationship("User", back_populates="created_groups")
+    creator = relationship("User", back_populates="created_group")
     users = relationship("User", secondary=band_members, back_populates="groups")
 
 class Duty(Base):
