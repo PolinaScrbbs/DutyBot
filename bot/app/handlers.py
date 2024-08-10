@@ -221,6 +221,18 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
     if group:
         await callback.message.answer(text=f'Группа *{group.title}* для *{group.course_number}* курса создана. Староста *@{username}*', parse_mode='Markdown' ,reply_markup=kb.main)
 
+
+#Вступление в группу ============================================================================================================>
+
+
+@router.message(lambda message: message.text == "Вступить в группу")
+async def group_join(message: Message, state: FSMContext):
+    session = await get_async_session()
+
+    groups = await rq.get_groups(session)
+
+    await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups))
+
 @router.callback_query(F.data == 'cancel')
 async def clear(callback:CallbackQuery, state: FSMContext):
     await state.clear()

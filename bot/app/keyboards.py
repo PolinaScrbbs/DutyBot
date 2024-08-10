@@ -61,6 +61,24 @@ course_number = InlineKeyboardMarkup(inline_keyboard=[
     InlineKeyboardButton(text='3 курс', callback_data='course_number_3'), InlineKeyboardButton(text='4 курс', callback_data='course_number_4')]
 ])
 
+async def inline_groups(groups_list):
+    keyboard = InlineKeyboardBuilder()
+
+    len_range = len(groups_list) if len(groups_list) % 2 == 0 else len(groups_list) - 1
+
+    for j in range(0, len_range, 2):
+        print(j)
+        keyboard.row(
+            InlineKeyboardButton(text=f"{groups_list[j].title}", callback_data=f"group_{groups_list[j].id}"),
+            InlineKeyboardButton(text=f"{groups_list[j + 1].title}", callback_data=f"group_{groups_list[j + 1].id}")
+        )
+
+    if len(groups_list) % 2 != 0:
+        keyboard.row(InlineKeyboardButton(text=f"{groups_list[-1].title}", callback_data=f"group_{groups_list[-1].id}"))
+
+    keyboard.row(InlineKeyboardButton(text='❌', callback_data='cancel'))
+
+    return keyboard.as_markup()
 
 # specializations = [
 #     "Экономист", "Специалист по ИС", "WEB-разработчик", "Ландшафтный дизайнер",

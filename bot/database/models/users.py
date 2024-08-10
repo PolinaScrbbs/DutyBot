@@ -120,6 +120,16 @@ class Group(Base):
         if not (1 <= value <= 4):
             raise ValueError("Номер курса должен быть от 1 до 4")
         return value
+    
+    # async def group_number(self):
+    #     specialties_abbreviations = {
+    #         "Экономист": "Э",
+    #         "Специалист по ИС": "ИС",
+    #         "WEB-разработчик": "ВР", #Новая специальность
+    #         "Ландшафтный дизайнер": "ЛД"
+    #     }
+
+    #     return f"{specialties_abbreviations[self.specialization]}"
 
     creator = relationship("User", back_populates="created_group")
     users = relationship("User", secondary=band_members, back_populates="groups")

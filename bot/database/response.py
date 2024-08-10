@@ -1,3 +1,4 @@
+from typing import List
 from database import get_async_session
 from .models.users import Token
 from sqlalchemy.future import select
@@ -73,4 +74,17 @@ async def create_group(session: AsyncSession, title: str, specialization: Specia
         await session.commit()
         return group
     finally:
-        session.close
+        await session.close()
+
+async def get_groups(session: AsyncSession) -> List[Group]:
+    try:
+        result = await session.execute(
+            select(Group)
+        )
+
+        groups = result.scalars().all()
+
+        return groups
+    
+    finally:
+        await session.close()
