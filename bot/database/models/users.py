@@ -39,6 +39,7 @@ class User(Base):
 
     created_group = relationship("Group", back_populates="creator")
     groups = relationship("Group", secondary=band_members, back_populates="users")
+    sent_requests = relationship("GroupRequest", back_populates="requesting")
 
     duties = relationship("Duty", back_populates="attendant") 
 
@@ -133,6 +134,26 @@ class Group(Base):
 
     creator = relationship("User", back_populates="created_group")
     users = relationship("User", secondary=band_members, back_populates="groups")
+
+class GroupRequestType(BaseEnum):
+    GROUP_JOIN = "На вступление в группу"
+    BECOME_ELDER = "Стать старостой"
+
+class GroupRequestStatus(BaseEnum):
+    SENT = "Отправлен"
+    ADOPTED = "Принят"
+    REJECTED = "Отклонен"
+
+class GroupRequest(Base):
+    __tablename__ = 'groups_requests'
+
+    id = Column(Integer, primary_key=True)
+    type = Column(Enum(GroupRequestType), nullable=False)
+    status = Column(Enum(GroupRequestStatus), default=GroupRequestStatus.SENT, nullable=False)
+    requesting_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    last_update_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    requesting = relationship("User", back_populates="sent_requests")
 
 class Duty(Base):
     __tablename__ = 'duties'
