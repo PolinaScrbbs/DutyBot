@@ -46,6 +46,8 @@ async def register_user(session: AsyncSession, username: str, password: str, nam
     except Exception as e:
         await session.rollback()
         raise Exception(f"Произошла ошибка при регистрации пользователя: {e}")
+    finally:
+        await session.close()
 
 async def get_user(session: AsyncSession, username: str) -> User:
     try:
@@ -56,7 +58,8 @@ async def get_user(session: AsyncSession, username: str) -> User:
         return user
     
     except Exception as e:
-        return str(e)
+        print(f"Error: {e}")
+        return None
     
 async def get_group(session: AsyncSession, id: int) -> Group:
     try:
@@ -68,7 +71,8 @@ async def get_group(session: AsyncSession, id: int) -> Group:
         return group if group else None
     
     except Exception as e:
-        return str(e)
+        print(f"Error: {e}")
+        return None
 
 async def create_group(session: AsyncSession, title: str, specialization: Specialization, course_number: int, creator_username: str) -> Group:
     user = await get_user(session, creator_username)
@@ -84,6 +88,11 @@ async def create_group(session: AsyncSession, title: str, specialization: Specia
         session.add(group)
         await session.commit()
         return group
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
     finally:
         await session.close()
 
@@ -97,25 +106,46 @@ async def get_groups(session: AsyncSession) -> List[Group]:
 
         return groups
     
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
+async def get_groups_without_requests(session: AsyncSession, user_id) -> List[Group]:
+    try:
+        groups = await get_groups(session)
+
+        requested_groups_result = await session.execute(
+            select(GroupRequest.group_id).where(GroupRequest.requesting_id == user_id)
+            )
+        requested_group_ids = requested_groups_result.scalars().all()
+
+        groups_without_requests = [group for group in groups if group.id not in requested_group_ids]
+
+        return groups_without_requests
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+    
     finally:
-        pass
-        # await session.close()
+        await session.close()
 
-async def send_group_request(session: AsyncSession, request_type: Enum, requesting_username: str, group_id: int) -> GroupRequest:
-    user = await get_user(session, requesting_username)
-    group = await get_group(session, group_id)
 
+async def send_group_request(session: AsyncSession, request_type: Enum, requesting_id: int, group_id: int) -> GroupRequest:
     request = GroupRequest(
         type = request_type,
-        requesting_id = user.id,
-        group_id = group.id
+        requesting_id = requesting_id,
+        group_id = group_id
     )
 
     try:
         session.add(request)
         await session.commit()
-        return request, group
-    except:
+        return request
+    
+    except Exception as e:
+        print(f"Error: {e}")
         return None, None
+    
     finally:
         await session.close()

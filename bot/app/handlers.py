@@ -229,12 +229,16 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 async def group_join(message: Message, state: FSMContext):
     try:
         session = await get_async_session()
+        user = await rq.get_user(session, message.from_user.username)
+        groups_without_requests = await rq.get_groups_without_requests(session, user.id)
 
-        groups = await rq.get_groups(session)
+        await state.update_data(user_id=user.id)
 
-        await state.update_data(username=message.from_user.username)
+        if groups_without_requests != []:
+            await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups_without_requests))
+        else:
+            await message.answer('Группы не найдены', parse_mode='Markdown', reply_markup=kb.ungroup_main)
 
-        await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups))
     finally:
         await session.close()
 
@@ -244,15 +248,17 @@ async def group_select(callback: CallbackQuery, state: FSMContext):
 
     session = await get_async_session()
     data = await state.get_data()
-    username = data["username"]
-    group_id = int(callback.data.split('_', 1)[1])
+    user_id = data["user_id"]
+    group_fields = callback.data.split('_')
+    group_id = int(group_fields[1])
+    group_title = group_fields[2]
 
-    request, group = await rq.send_group_request(session, GroupRequestType.GROUP_JOIN, username, group_id)
+    request = await rq.send_group_request(session, GroupRequestType.GROUP_JOIN, user_id, group_id)
 
-    if request and group:
-        await callback.message.edit_text(f'Заявка на вступление в *{group.title}* отправлена', parse_mode='Markdown', reply_markup=kb.ungroup_main)
+    if request:
+        await callback.message.edit_text(f'Заявка на вступление в *{group_title}* отправлена', parse_mode='Markdown')
     else:
-        await callback.message.edit_text(f'Не удалось отправить заявку на вступление', reply_markup=kb.ungroup_main)
+        await callback.message.edit_text(f'Не удалось отправить заявку на вступление')
 
 @router.callback_query(F.data == 'cancel')
 async def clear(callback:CallbackQuery, state: FSMContext):
