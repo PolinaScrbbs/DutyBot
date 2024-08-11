@@ -4,7 +4,7 @@ from .models.users import Token
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from .models.users import User, Specialization, Group
+from .models.users import User, Specialization, Group, GroupRequest
 from enum import Enum
 
 # async def save_token(user_id, token):
@@ -53,15 +53,26 @@ async def get_user(session: AsyncSession, username: str) -> User:
             select(User).where(User.username == username)
         )
         user = result.scalars().one_or_none()
-        print(User)
         return user
+    
+    except Exception as e:
+        return str(e)
+    
+async def get_group(session: AsyncSession, id: int) -> Group:
+    try:
+        result = await session.execute(
+            select(Group).where(Group.id == id)
+        )
+        group = result.scalars().one_or_none()
+
+        return group if group else None
     
     except Exception as e:
         return str(e)
 
 async def create_group(session: AsyncSession, title: str, specialization: Specialization, course_number: int, creator_username: str) -> Group:
     user = await get_user(session, creator_username)
-    print(course_number, type(course_number))
+
     group = Group(
         title = title,
         specialization = specialization,
@@ -86,5 +97,25 @@ async def get_groups(session: AsyncSession) -> List[Group]:
 
         return groups
     
+    finally:
+        pass
+        # await session.close()
+
+async def send_group_request(session: AsyncSession, request_type: Enum, requesting_username: str, group_id: int) -> GroupRequest:
+    user = await get_user(session, requesting_username)
+    group = await get_group(session, group_id)
+
+    request = GroupRequest(
+        type = request_type,
+        requesting_id = user.id,
+        group_id = group.id
+    )
+
+    try:
+        session.add(request)
+        await session.commit()
+        return request, group
+    except:
+        return None, None
     finally:
         await session.close()

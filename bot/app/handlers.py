@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload, joinedload
 
 import app.keyboards as kb
 import app.states as st
-from . import User, Token, Role, Specialization
+from . import User, Token, Role, GroupRequestType
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
 import database.response as rq
@@ -227,11 +227,32 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 
 @router.message(lambda message: message.text == "Вступить в группу")
 async def group_join(message: Message, state: FSMContext):
+    try:
+        session = await get_async_session()
+
+        groups = await rq.get_groups(session)
+
+        await state.update_data(username=message.from_user.username)
+
+        await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups))
+    finally:
+        await session.close()
+
+@router.callback_query(lambda query: query.data.startswith('group_'))
+async def group_select(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete_reply_markup()
+
     session = await get_async_session()
+    data = await state.get_data()
+    username = data["username"]
+    group_id = int(callback.data.split('_', 1)[1])
 
-    groups = await rq.get_groups(session)
+    request, group = await rq.send_group_request(session, GroupRequestType.GROUP_JOIN, username, group_id)
 
-    await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups))
+    if request and group:
+        await callback.message.edit_text(f'Заявка на вступление в *{group.title}* отправлена', parse_mode='Markdown', reply_markup=kb.ungroup_main)
+    else:
+        await callback.message.edit_text(f'Не удалось отправить заявку на вступление', reply_markup=kb.ungroup_main)
 
 @router.callback_query(F.data == 'cancel')
 async def clear(callback:CallbackQuery, state: FSMContext):

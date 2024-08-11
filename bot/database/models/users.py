@@ -134,6 +134,7 @@ class Group(Base):
 
     creator = relationship("User", back_populates="created_group")
     users = relationship("User", secondary=band_members, back_populates="groups")
+    requests = relationship("GroupRequest", back_populates="selected_group")
 
 class GroupRequestType(BaseEnum):
     GROUP_JOIN = "На вступление в группу"
@@ -151,9 +152,11 @@ class GroupRequest(Base):
     type = Column(Enum(GroupRequestType), nullable=False)
     status = Column(Enum(GroupRequestStatus), default=GroupRequestStatus.SENT, nullable=False)
     requesting_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True, default=None)
     last_update_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     requesting = relationship("User", back_populates="sent_requests")
+    selected_group = relationship("Group", back_populates="")
 
 class Duty(Base):
     __tablename__ = 'duties'
