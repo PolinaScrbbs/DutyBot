@@ -4,7 +4,7 @@ from .models.users import Token
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from .models.users import User, Specialization, Group, GroupRequest
+from .models.users import User, Specialization, Group, Application
 from enum import Enum
 
 # async def save_token(user_id, token):
@@ -110,18 +110,18 @@ async def get_groups(session: AsyncSession) -> List[Group]:
         print(f"Error: {e}")
         return []
 
-async def get_groups_without_requests(session: AsyncSession, user_id) -> List[Group]:
+async def get_groups_without_application_from_user(session: AsyncSession, user_id) -> List[Group]:
     try:
         groups = await get_groups(session)
 
-        requested_groups_result = await session.execute(
-            select(GroupRequest.group_id).where(GroupRequest.requesting_id == user_id)
+        groups_with_application = await session.execute(
+            select(Application.group_id).where(Application.sending_id == user_id)
             )
-        requested_group_ids = requested_groups_result.scalars().all()
+        groups_with_application_ids = groups_with_application.scalars().all()
 
-        groups_without_requests = [group for group in groups if group.id not in requested_group_ids]
+        groups_without_application = [group for group in groups if group.id not in groups_with_application_ids]
 
-        return groups_without_requests
+        return groups_without_application
     
     except Exception as e:
         print(f"Error: {e}")
@@ -131,10 +131,10 @@ async def get_groups_without_requests(session: AsyncSession, user_id) -> List[Gr
         await session.close()
 
 
-async def send_group_request(session: AsyncSession, request_type: Enum, requesting_id: int, group_id: int) -> GroupRequest:
-    request = GroupRequest(
+async def send_application(session: AsyncSession, request_type: Enum, sending_id: int, group_id: int) -> Application:
+    request = Application(
         type = request_type,
-        requesting_id = requesting_id,
+        sending_id = sending_id,
         group_id = group_id
     )
 

@@ -39,7 +39,7 @@ class User(Base):
 
     created_group = relationship("Group", back_populates="creator")
     groups = relationship("Group", secondary=band_members, back_populates="users")
-    sent_requests = relationship("GroupRequest", back_populates="requesting")
+    sent_application = relationship("Application", back_populates="sending")
 
     duties = relationship("Duty", back_populates="attendant") 
 
@@ -134,29 +134,29 @@ class Group(Base):
 
     creator = relationship("User", back_populates="created_group")
     users = relationship("User", secondary=band_members, back_populates="groups")
-    requests = relationship("GroupRequest", back_populates="selected_group")
+    applications = relationship("Application", back_populates="group_applications")
 
-class GroupRequestType(BaseEnum):
+class ApplicationType(BaseEnum):
     GROUP_JOIN = "На вступление в группу"
     BECOME_ELDER = "Стать старостой"
 
-class GroupRequestStatus(BaseEnum):
+class ApplicationStatus(BaseEnum):
     SENT = "Отправлен"
     ADOPTED = "Принят"
     REJECTED = "Отклонен"
 
-class GroupRequest(Base):
-    __tablename__ = 'groups_requests'
+class Application(Base):
+    __tablename__ = 'applications'
 
     id = Column(Integer, primary_key=True)
-    type = Column(Enum(GroupRequestType), nullable=False)
-    status = Column(Enum(GroupRequestStatus), default=GroupRequestStatus.SENT, nullable=False)
-    requesting_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(Enum(ApplicationType), nullable=False)
+    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.SENT, nullable=False)
+    sending_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True, default=None)
     last_update_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    requesting = relationship("User", back_populates="sent_requests")
-    selected_group = relationship("Group", back_populates="")
+    sending = relationship("User", back_populates="sent_application")
+    group_applications = relationship("Group", back_populates="applications")
 
 class Duty(Base):
     __tablename__ = 'duties'

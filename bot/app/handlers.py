@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload, joinedload
 
 import app.keyboards as kb
 import app.states as st
-from . import User, Token, Role, GroupRequestType
+from . import User, Token, Role, ApplicationType
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
 import database.response as rq
@@ -230,12 +230,12 @@ async def group_join(message: Message, state: FSMContext):
     try:
         session = await get_async_session()
         user = await rq.get_user(session, message.from_user.username)
-        groups_without_requests = await rq.get_groups_without_requests(session, user.id)
+        groups_without_application_from_user = await rq.get_groups_without_application_from_user(session, user.id)
 
         await state.update_data(user_id=user.id)
 
-        if groups_without_requests != []:
-            await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups_without_requests))
+        if groups_without_application_from_user != []:
+            await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups_without_application_from_user))
         else:
             await message.answer('Группы не найдены', parse_mode='Markdown', reply_markup=kb.ungroup_main)
 
@@ -243,7 +243,7 @@ async def group_join(message: Message, state: FSMContext):
         await session.close()
 
 @router.callback_query(lambda query: query.data.startswith('group_'))
-async def group_select(callback: CallbackQuery, state: FSMContext):
+async def group_application(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
 
     session = await get_async_session()
@@ -253,7 +253,7 @@ async def group_select(callback: CallbackQuery, state: FSMContext):
     group_id = int(group_fields[1])
     group_title = group_fields[2]
 
-    request = await rq.send_group_request(session, GroupRequestType.GROUP_JOIN, user_id, group_id)
+    request = await rq.send_application(session, ApplicationType.GROUP_JOIN, user_id, group_id)
 
     if request:
         await callback.message.edit_text(f'Заявка на вступление в *{group_title}* отправлена', parse_mode='Markdown')
