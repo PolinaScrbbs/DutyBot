@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from database import get_async_session
 from .models.users import Token
 from sqlalchemy.future import select
@@ -131,21 +131,39 @@ async def get_groups_without_application_from_user(session: AsyncSession, user_i
         await session.close()
 
 
-async def send_application(session: AsyncSession, request_type: Enum, sending_id: int, group_id: int) -> Application:
-    request = Application(
-        type = request_type,
-        sending_id = sending_id,
+async def send_application(session: AsyncSession, application_type: Enum, user_id: int, group_id: Optional[int]) -> Application:
+    application = Application(
+        type = application_type,
+        sending_id = user_id,
         group_id = group_id
     )
 
     try:
-        session.add(request)
+        session.add(application)
         await session.commit()
-        return request
+        return application
     
     except Exception as e:
         print(f"Error: {e}")
-        return None, None
+        return None
     
     finally:
         await session.close()
+
+async def get_application(session: AsyncSession, application_type: Enum, user_id: int, group_id: Optional[int]) -> Application:
+    try:
+        result = await session.execute(
+            select(Application).where(
+                Application.type==application_type, 
+                Application.sending_id==user_id, 
+                Application.group_id==group_id
+            )
+        )
+
+        application = result.scalars().one_or_none()
+
+        return application
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None

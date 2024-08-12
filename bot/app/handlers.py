@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload, joinedload
 
 import app.keyboards as kb
 import app.states as st
+import app.utils as ut
 from . import User, Token, Role, ApplicationType
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
@@ -259,6 +260,28 @@ async def group_application(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(f'Заявка на вступление в *{group_title}* отправлена', parse_mode='Markdown')
     else:
         await callback.message.edit_text(f'Не удалось отправить заявку на вступление')
+
+
+#Стать старостой ============================================================================================================>
+
+
+@router.message(lambda message: message.text == "Стать старостой")
+async def group_join(message: Message):
+    try:
+        session = await get_async_session()
+        user = await rq.get_user(session, message.from_user.username)
+
+        application = await rq.get_application(session, ApplicationType.BECOME_ELDER, user.id, None)
+        msg = f'Ваша заявка была отправлена *{ut.format_datetime(application.last_update_at)}*'
+        
+        if application is None:
+            application = await rq.send_application(session, ApplicationType.BECOME_ELDER, user.id, None)
+            msg = 'Заявка на получение роли *"Староста"* отправлена'
+
+        await message.answer(msg, parse_mode='Markdown')
+
+    finally:
+        await session.close()
 
 @router.callback_query(F.data == 'cancel')
 async def clear(callback:CallbackQuery, state: FSMContext):
