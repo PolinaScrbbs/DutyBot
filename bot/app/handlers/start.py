@@ -2,16 +2,13 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-import app.keyboards as kb
-from .. import User
 from database import get_async_session
+from .. import User
+import app.keyboards as kb
 
-import logging
-logging.basicConfig(level=logging.INFO)
 
 router = Router()
 

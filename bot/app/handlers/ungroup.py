@@ -1,7 +1,6 @@
 from aiogram.types import Message, CallbackQuery
-from .auth import router
-
 from aiogram.fsm.context import FSMContext
+
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -12,7 +11,7 @@ import database.requests as rq
 
 from .. import User, Role, ApplicationType
 from database import get_async_session
-
+from .auth import router
 
 
 #Создание группы============================================================================================================

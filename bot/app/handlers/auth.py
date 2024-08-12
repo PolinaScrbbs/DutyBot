@@ -1,7 +1,5 @@
-from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-from .start import router
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -9,12 +7,11 @@ from sqlalchemy.orm import selectinload
 import app.keyboards as kb
 import app.states as st
 import database.requests as rq
-from .. import User, Token
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
 
-import logging
-logging.basicConfig(level=logging.INFO)
+from .. import User, Token
+from .start import router
 
 
 #Регистрация============================================================================================================
