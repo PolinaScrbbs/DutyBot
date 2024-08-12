@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 import app.keyboards as kb
 import app.states as st
-import database.response as rq
+import database.requests as rq
 from .. import User, Token
 from app.validators.registration import RegistrationValidator
 from database import get_async_session

@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 router = Router()
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, state: FSMContext):
+async def cmd_start(message: Message):
     session = await get_async_session()
     try:
         result = await session.execute(
@@ -36,10 +36,6 @@ async def cmd_start(message: Message, state: FSMContext):
                     keyboard = kb.ungroup_main
                 else:
                     keyboard = kb.elder_main
-                    await state.update_data(data={
-                        "user_id": user.id,
-                        "group_id": user.created_group.id
-                    })
             await message.answer(msg, reply_markup=keyboard)
         else:
             await message.answer(msg, reply_markup=keyboard)
