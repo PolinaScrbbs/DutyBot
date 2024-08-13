@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.users import Specialization, Group, Application
+from ..models.users import Specialization, Group, Application, User
 from .user import get_user
 
 async def create_group(session: AsyncSession, title: str, specialization: Specialization, course_number: int, creator_username: str) -> Group:
@@ -60,11 +60,11 @@ async def get_group_by_id(session: AsyncSession, id: int) -> Group:
         print(f"Error: {e}")
         return None
     
-async def get_group_by_id_with_students(session: AsyncSession, id: int) -> Group:
+async def get_group_by_id_with_students(session: AsyncSession, group_id: int, user_id: int) -> Group:
     try:
         result = await session.execute(
-            select(Group).where(Group.id == id).options(
-                selectinload(Group.students)
+            select(Group).where(Group.id == group_id).options(
+                selectinload(Group.students.and_(User.id != user_id))
             )
         )
         group = result.scalars().one_or_none()

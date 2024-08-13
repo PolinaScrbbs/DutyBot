@@ -19,7 +19,7 @@ from .ungroup import router
 async def group_menu(message: Message, state: FSMContext):
     session = await get_async_session()
     user = await rq.get_user(session, message.from_user.username)
-    group = await rq.get_group_by_id_with_students(session, user.group_id)
+    group = await rq.get_group_by_id_with_students(session, user.group_id, user.id)
     await session.close()
 
     await state.update_data(data={
@@ -36,5 +36,20 @@ async def catalog(callback:CallbackQuery, state: FSMContext):
     group = data['group']
     
     await callback.message.edit_text('*Студенты*', parse_mode="Markdown", reply_markup=await kb.inline_students(group.students))
+
+@router.callback_query(lambda query: query.data.startswith('st_'))
+async def group_application(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete_reply_markup()
+    students_fields = callback.data.split('_')
+    student_username = students_fields[2]
+
+    session = await get_async_session()
+    student = await rq.get_user(session, student_username)
+
+    await callback.message.edit_text(
+        f'*@{student.username}*\n{student.surname} {student.name}', 
+        parse_mode='Markdown', 
+        reply_markup=await kb.inline_student(student.id)
+    )
 
     

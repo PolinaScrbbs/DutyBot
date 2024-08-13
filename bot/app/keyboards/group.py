@@ -35,3 +35,9 @@ async def inline_students(students):
     keyboard.row(InlineKeyboardButton(text='❌', callback_data='cancel'))
 
     return keyboard.as_markup()
+
+async def inline_student(user_id):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text='Выгнать', callback_data=f'st_delete_{user_id}'))
+
+    return keyboard.as_markup()
