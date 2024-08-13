@@ -1,6 +1,7 @@
 from typing import List
 
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.users import Specialization, Group, Application
@@ -50,6 +51,21 @@ async def get_group_by_id(session: AsyncSession, id: int) -> Group:
     try:
         result = await session.execute(
             select(Group).where(Group.id == id)
+        )
+        group = result.scalars().one_or_none()
+
+        return group
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+async def get_group_by_id_with_students(session: AsyncSession, id: int) -> Group:
+    try:
+        result = await session.execute(
+            select(Group).where(Group.id == id).options(
+                selectinload(Group.students)
+            )
         )
         group = result.scalars().one_or_none()
 

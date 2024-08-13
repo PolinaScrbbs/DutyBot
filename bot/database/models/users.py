@@ -65,7 +65,7 @@ class User(Base):
     username = Column(String(32), unique=True, nullable=False)
     hashed_password = Column(String(1024), nullable=False)
     role = Column(Enum(Role), default=Role.STUDENT, nullable=False)
-    group_id = Column(Integer, ForeignKey('groups.id'), unique=True, default=None, nullable=True)
+    group_id = Column(Integer, ForeignKey('groups.id'), default=None, nullable=True)
     name = Column(String(64), nullable=False)
     surname = Column(String(64), nullable=False)
     patronymic = Column(String(64), nullable=False)
