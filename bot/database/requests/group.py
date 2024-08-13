@@ -1,10 +1,8 @@
-from typing import List, Optional
-from enum import Enum
+from typing import List
 
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_async_session
 from ..models.users import Specialization, Group, Application
 from .user import get_user
 
@@ -21,6 +19,10 @@ async def create_group(session: AsyncSession, title: str, specialization: Specia
     try:
         session.add(group)
         await session.commit()
+
+        user.group_id = group.id
+        await session.commit()
+
         return group
     
     except Exception as e:
@@ -44,14 +46,27 @@ async def get_groups(session: AsyncSession) -> List[Group]:
         print(f"Error: {e}")
         return []
     
-async def get_group(session: AsyncSession, id: int) -> Group:
+async def get_group_by_id(session: AsyncSession, id: int) -> Group:
     try:
         result = await session.execute(
             select(Group).where(Group.id == id)
         )
         group = result.scalars().one_or_none()
 
-        return group if group else None
+        return group
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+async def get_group_by_title(session: AsyncSession, title: str) -> Group:
+    try:
+        result = await session.execute(
+            select(Group).where(Group.title == title)
+        )
+        group = result.scalars().one_or_none()
+
+        return group
     
     except Exception as e:
         print(f"Error: {e}")

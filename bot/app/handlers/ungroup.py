@@ -20,39 +20,51 @@ from .auth import router
 @router.message(lambda message: message.text == "Создать группу")
 async def group_create(message: Message, state: FSMContext):
     session = await get_async_session()
-    tg_username = message.from_user.username
+    username = message.from_user.username
     try:
-        result = await session.execute(
-            select(User)
-            .where(User.username == tg_username)
-            .options(selectinload(User.created_group), selectinload(User.tokens)))
-        
-        user = result.unique().scalar_one_or_none()
+        user = await rq.get_user(session, username)
 
         if not user:
-            await message.answer(f'Пользователь @{tg_username} не найден, пройдите регистрацию', reply_markup=kb.start)
+            await message.answer(f'Пользователь @{username} не найден, пройдите регистрацию', reply_markup=kb.start)
 
-        elif user.tokens is None:
+        elif not await rq.auth_check(session, user.id):
             await message.answer(f'Пройдите авторизацию', reply_markup=kb.start)
 
-        elif user.role is Role.ELDER:
-            if user.created_group == []:
-                await message.answer(f'Введите название группы (Не номер)')
-                await state.set_state(st.GroupCreate.title)
-            else:
-                await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.elder_main)
-        else:
+        elif user.role is not Role.ELDER:
             await message.answer(f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время', reply_markup=kb.ungroup_main)
+
+        elif user.group_id != None:
+            await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.main)
+
+        else:
+            await message.answer(f'Введите название группы (Не номер)')
+            await state.set_state(st.GroupCreate.title)
 
     finally:
         await session.close()
 
 @router.message(st.GroupCreate.title)
 async def group_title(message: Message, state: FSMContext):
-    await state.update_data(creator=message.from_user.username)
-    await state.update_data(title=message.text)
     
-    await message.answer('Выберите свою специальность', reply_markup=kb.specializations)
+    title = message.text
+    await state.update_data(creator=message.from_user.username)
+    await state.update_data(title=title)
+
+    try:
+        session = await get_async_session()
+        if await rq.get_group_by_title(session, title):
+            await session.rollback()
+            raise Exception("Группа с таким названием уже существует")
+        else: 
+            await message.answer('Выберите свою специальность', reply_markup=kb.specializations)
+
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+        await message.answer(f'Введите название группы (Не номер)')
+    finally:
+        await session.close()
+    
+    
 
 @router.callback_query(lambda query: query.data.startswith('spec_'))
 async def group_specialization(callback: CallbackQuery, state: FSMContext):
@@ -67,21 +79,27 @@ async def group_specialization(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(lambda query: query.data.startswith('course_number_'))
 async def group_course_number(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
+    try:
+        course_number = int(callback.data.split('_')[2])
+        await callback.message.edit_text(f'Вы выбрали *{course_number} курс*', parse_mode='Markdown')
 
-    course_number = int(callback.data.split('_')[2])
-    await callback.message.edit_text(f'Вы выбрали *{course_number} курс*', parse_mode='Markdown')
+        session= await get_async_session()
+        data = await state.get_data()
+        title = data["title"]
+        specialization = await rq.get_specialization(data["specialization"])
+        username = data["creator"]
+        
+        group = await rq.create_group(session, title, specialization, course_number, username)
 
-    session= await get_async_session()
-    data = await state.get_data()
-    title = data["title"]
-    specialization = await rq.get_specialization(data["specialization"])
-    username = data["creator"]
+        if group:
+            await callback.message.answer(
+                text=f'Группа *{group.title}* для *{group.course_number}* курса создана. Староста *@{username}*',
+                parse_mode='Markdown',
+                reply_markup=kb.main
+            )
 
-    group = await rq.create_group(session, title, specialization, course_number, username)
-
-    if group:
-        await callback.message.answer(text=f'Группа *{group.title}* для *{group.course_number}* курса создана. Староста *@{username}*', parse_mode='Markdown' ,reply_markup=kb.elder_main)
-
+    except Exception as e:
+        await callback.message.answer(f"{e}")
 
 #Вступление в группу ============================================================================================================>
 
