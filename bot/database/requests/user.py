@@ -2,9 +2,12 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.users import User
+from ..models.users import User, Token
 
-async def register_user(session: AsyncSession, username: str, password: str, name: str, surname: str, patronymic: str) -> User:
+async def reg_user(session: AsyncSession, username: str, password: str, full_name: str) -> User:
+    parts = full_name.split()
+    surname, name, patronymic = parts
+    
     user = User(
         username=username,
         name=name,
@@ -27,11 +30,37 @@ async def register_user(session: AsyncSession, username: str, password: str, nam
     finally:
         await session.close()
 
+async def auth_user(session: AsyncSession, login: str, password: str):
+    try:
+        result = await session.execute(
+            select(User).where(User.username==login)
+        )
+
+        user = result.scalars().one_or_none() 
+
+        if user != None and user.check_password(password):
+            token = user.generate_token()
+            token = Token(user_id=user.id, token=token)
+            session.add(token)
+            await session.commit()
+
+        else:
+            raise Exception(f"*Неверный пароль*")
+
+        return user
+    
+    # except Exception as e:
+    #     await session.rollback()
+    #     raise Exception(f"❌ Ошибка авторизации {e}")
+    finally:
+        await session.close()
+    
 async def get_user(session: AsyncSession, username: str) -> User:
     try:
         result = await session.execute(
             select(User).where(User.username == username)
         )
+
         user = result.scalars().one_or_none()
         return user
     

@@ -40,35 +40,26 @@ async def registration(message: Message, state: FSMContext):
     try:
         await state.update_data(confirm_password=message.text)
         data = await state.get_data()
-        full_name = data["full_name"]
+        username = data["username"]
         password = data["password"]
         confirm_password = data["confirm_password"]
-
+        full_name = data["full_name"]
+        
         validator = RegistrationValidator(full_name, password, confirm_password)
         error_message = await validator.validate()
 
         if error_message:
-            await message.answer(f'❌*Ошибка1:* {error_message}', parse_mode="Markdown", reply_markup=kb.start)
+            await message.answer(f'❌*Ошибка:* {error_message}', parse_mode="Markdown", reply_markup=kb.start)
         else:
-            session = await get_async_session()
-            parts = full_name.split()
-            surname, name, patronymic = parts
             try:
-                await rq.register_user(
-                    session,
-                    message.from_user.username,
-                    password,
-                    name,
-                    surname,
-                    patronymic
-                )
-
-                await message.answer(f'✅ Пользователь *@{message.from_user.username}* успешно зарегистрирован.', parse_mode="Markdown", reply_markup=kb.start)
+                session = await get_async_session()
+                user = await rq.reg_user(session, username, password, full_name)
+                await message.answer(f'✅ Пользователь *@{user.username}* успешно зарегистрирован.', parse_mode="Markdown", reply_markup=kb.start)
             except Exception as e:
-                await message.answer(f'❌*Ошибка2:* {e}', parse_mode="Markdown", reply_markup=kb.start)
+                await message.answer(f'❌*Ошибка:* {e}', parse_mode="Markdown", reply_markup=kb.start)
     
     except Exception as e:
-        await message.answer(f'❌*Ошибка3:* {str(e)}', parse_mode="Markdown", reply_markup=kb.start)
+        await message.answer(f'❌*Ошибка:* {str(e)}', parse_mode="Markdown", reply_markup=kb.start)
 
     finally:
         await session.close()
@@ -90,29 +81,22 @@ async def authorazation(message: Message, state: FSMContext):
     
     try:
         session = await get_async_session()
-        result = await session.execute(
-                select(User).filter(User.username == login)
-                .options(selectinload(User.groups))
-            )
-        user = result.scalar_one_or_none()
+        # msg = "❌ Неверный логин или пароль"
+        # keyboard = None
+
+        user = await rq.auth_user(session, login, password)
         
-        keyboard = kb.elder_main
+        keyboard = kb.main
+            
+        if user.group_id == None:
+            keyboard = kb.ungroup_main
 
-        if user and user.check_password(password):
-            token = user.generate_token()
-            token = Token(user_id=user.id, token=token)
-            session.add(token)
-            await session.commit()
-
-            if not user.groups:
-                keyboard = kb.ungroup_main
-
-            await message.answer(f"*@{message.from_user.username}*, авторизация завершена ✌️", parse_mode="Markdown", reply_markup=keyboard)
-        else:
-            await message.answer("❌ Неверный логин или пароль")
+        await message.answer(f"*@{user.username}*, авторизация завершена ✌️", parse_mode="Markdown", reply_markup=keyboard)
+        # else:
+        #     await message.answer("❌ Неверный логин или пароль")
 
     except Exception as e:
-        await message.answer(f'❌Ошибка авторизации {e}')
+        await message.answer(f'❌ Ошибка авторизации: {e}', parse_mode="Markdown", reply_markup=kb.start)
     finally:
         await session.close()
         await state.clear()

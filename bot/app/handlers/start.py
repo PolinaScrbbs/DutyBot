@@ -8,33 +8,30 @@ from sqlalchemy.orm import selectinload
 from database import get_async_session
 from .. import User
 import app.keyboards as kb
-
+import database.requests as rq
 
 router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     session = await get_async_session()
+    username = message.from_user.username
     try:
-        result = await session.execute(
-            select(User)
-            .where(User.username == message.from_user.username)
-            .options(selectinload(User.created_group), selectinload(User.tokens))
-        )
-        user = result.unique().scalar_one_or_none()
+        user = await rq.get_user(session, username)
         
         msg = 'Привет👋\nВыбери пункт из меню🔍'
         keyboard = kb.start
 
-        if user:
-            if user.get_token():
-                msg = 'С возвращением👋\nВыбери пункт из меню🔍'
-                if user.created_group == []:
-                    keyboard = kb.ungroup_main
-                else:
-                    keyboard = kb.elder_main
-            await message.answer(msg, reply_markup=keyboard)
-        else:
-            await message.answer(msg, reply_markup=keyboard)
+        if user and await rq.auth_check(session, user.id):
+            msg = f'С возвращением *{username}*👋 \nВыбери пункт из меню🔍'
+            keyboard = kb.main
+            
+            group = await rq.get_group_by_id(session, user.group_id)
+
+            if group == None:
+                keyboard = kb.ungroup_main
+
+        await message.answer(msg, reply_markup=keyboard, parse_mode="Markdown")
+        
     finally:
         await session.close()
