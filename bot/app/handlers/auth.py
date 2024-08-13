@@ -1,7 +1,7 @@
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-import bot.app.keyboards as kb
+import app.keyboards as kb
 import app.states as st
 import database.requests as rq
 from app.validators.registration import RegistrationValidator

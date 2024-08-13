@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 
 from database import get_async_session
-import bot.app.keyboards as kb
+import app.keyboards as kb
 import database.requests as rq
 
 router = Router()

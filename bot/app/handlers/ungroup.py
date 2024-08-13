@@ -1,7 +1,7 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-import bot.app.keyboards as kb
+import app.keyboards as kb
 import app.states as st
 import app.utils as ut
 import database.requests as rq
