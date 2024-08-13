@@ -1,15 +1,12 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
-import app.keyboards as kb
+import bot.app.keyboards as kb
 import app.states as st
 import app.utils as ut
 import database.requests as rq
 
-from .. import User, Role, ApplicationType
+from .. import Role, ApplicationType
 from database import get_async_session
 from .auth import router
 
@@ -34,7 +31,7 @@ async def group_create(message: Message, state: FSMContext):
             await message.answer(f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время', reply_markup=kb.ungroup_main)
 
         elif user.group_id != None:
-            await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.main)
+            await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.ungroup_main)
 
         else:
             await message.answer(f'Введите название группы (Не номер)')

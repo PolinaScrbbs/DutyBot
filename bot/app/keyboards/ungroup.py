@@ -1,16 +1,7 @@
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton, WebAppInfo,
-                           InlineKeyboardMarkup, InlineKeyboardButton)
+                            InlineKeyboardMarkup, InlineKeyboardButton)
 
-from aiogram.utils.keyboard import KeyboardBuilder, ReplyKeyboardBuilder, InlineKeyboardBuilder
-
-from . import Specialization
-
-start = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Авторизация'), KeyboardButton(text='Регистрация')],
-    [KeyboardButton(text='Создатель', web_app=WebAppInfo(url='https://github.com/PolinaScrbbs'))]
-],
-                        resize_keyboard=True,
-                        input_field_placeholder='Выберите пункт меню')
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 ungroup_main = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Вступить в группу'), KeyboardButton(text='Создать группу')],
@@ -19,19 +10,6 @@ ungroup_main = ReplyKeyboardMarkup(keyboard=[
 ],
                         resize_keyboard=True,
                         input_field_placeholder='Выберите пункт меню')
-
-main = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Назначить дежурных')],
-    [KeyboardButton(text='Список дежурств'), KeyboardButton(text='Количество дежурств')],
-    [KeyboardButton(text='Список студентов')],
-    [KeyboardButton(text='Создатель', web_app=WebAppInfo(url='https://github.com/PolinaScrbbs'))]
-],
-                        resize_keyboard=True,
-                        input_field_placeholder='Выберите пункт меню')
-
-cancel = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='❌', callback_data='cancel')]
-])
 
 specializations = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Экономист', callback_data='spec_Экономист'),
@@ -78,27 +56,3 @@ async def inline_groups(groups_list):
     keyboard.row(InlineKeyboardButton(text='❌', callback_data='cancel'))
 
     return keyboard.as_markup()
-
-# specializations = [
-#     "Экономист", "Специалист по ИС", "WEB-разработчик", "Ландшафтный дизайнер",
-#     "Рабочий легкой промышленности", "Парикмахер", "Косметолог", "Дизайнер",
-#     "Пожарный", "Строитель", "BIM-специалист", "Банкир",
-#     "Финансист", "Сварщик", "Пекарь-кондитер", "Промышленный дизайнер мебели",
-#     "Дизайнер интерьера", "Атомщик"]
-
-# async def inline_specializations(specializations_list):
-#     keyboard = InlineKeyboardBuilder()
-    
-#     # Добавляем все специальности по 2 в ряд
-#     for specialization in specializations_list:  # Все кроме последнего
-#         keyboard.add(InlineKeyboardButton(text=specialization, callback_data=f"spec_{specialization}"))
-    
-
-#     keyboard.add(
-#         InlineKeyboardButton(text="Общестроительный рабочий" , callback_data=f"spec_Общестроительный рабочий"),
-#         InlineKeyboardButton(text='❌', callback_data='cancel')
-#     )
-#     keyboard.adjust(2)
-#     # Применяем форматирование, чтобы все кроме последней специальности были по 2 в строке
-#     return keyboard.as_markup()
-

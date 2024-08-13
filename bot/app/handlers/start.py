@@ -2,12 +2,8 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
 from database import get_async_session
-from .. import User
-import app.keyboards as kb
+import bot.app.keyboards as kb
 import database.requests as rq
 
 router = Router()

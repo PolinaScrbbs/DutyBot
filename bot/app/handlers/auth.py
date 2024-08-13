@@ -1,18 +1,13 @@
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
-import app.keyboards as kb
+import bot.app.keyboards as kb
 import app.states as st
 import database.requests as rq
 from app.validators.registration import RegistrationValidator
 from database import get_async_session
 
-from .. import User, Token
 from .start import router
-
 
 #Регистрация============================================================================================================
 
@@ -86,7 +81,7 @@ async def authorazation(message: Message, state: FSMContext):
 
         user = await rq.auth_user(session, login, password)
         
-        keyboard = kb.main
+        keyboard = kb.elder_main
             
         if user.group_id == None:
             keyboard = kb.ungroup_main
