@@ -208,6 +208,7 @@ pip-selfcheck.json
 
 ### VisualStudioCode ###
 .vscode/*
+.idea/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
