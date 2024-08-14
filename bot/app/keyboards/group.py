@@ -15,6 +15,7 @@ group_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Студенты', callback_data='students')],
     [InlineKeyboardButton(text='Заявки', callback_data='group_applications')],
     [InlineKeyboardButton(text='Настройки', callback_data='settings')],
+    [InlineKeyboardButton(text='❌ Закрыть', callback_data='close')]
     # [InlineKeyboardButton(text='Удалить группу', callback_data='group_delete')]
 ])
 
@@ -32,7 +33,7 @@ async def inline_students(students):
     if len(students) % 2 != 0:
         keyboard.row(InlineKeyboardButton(text=f"{students[-1].username}", callback_data=f"st_{students[-1].id}_{students[-1].username}"))
 
-    keyboard.row(InlineKeyboardButton(text='❌', callback_data='cancel'))
+    keyboard.row(InlineKeyboardButton(text='❌ Закрыть', callback_data='close'))
 
     return keyboard.as_markup()
 

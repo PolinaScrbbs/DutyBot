@@ -7,4 +7,9 @@ from .group import router
 @router.callback_query(F.data == 'cancel')
 async def catalog(callback:CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text('✅Отменено')
+    await callback.message.edit_text('✅ Отменено')
+
+@router.callback_query(F.data == 'close')
+async def catalog(callback:CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text('✅ Закрыто')
