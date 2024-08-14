@@ -15,7 +15,7 @@ async def cmd_start(message: Message):
     session = await get_async_session()
     username = message.from_user.username
     try:
-        user = await rq.get_user(session, username)
+        user = await rq.get_user_by_username(session, username)
         
         msg = 'Привет👋\nВыбери пункт из меню🔍'
         keyboard = kb.start

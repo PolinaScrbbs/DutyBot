@@ -5,10 +5,10 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.users import Specialization, Group, Application, User
-from .user import get_user
+from .user import get_user_by_username, get_student_by_id
 
 async def create_group(session: AsyncSession, title: str, specialization: Specialization, course_number: int, creator_username: str) -> Group:
-    user = await get_user(session, creator_username)
+    user = await get_user_by_username(session, creator_username)
 
     group = Group(
         title = title,
@@ -113,3 +113,18 @@ async def get_specialization(text: str) -> Specialization:
         if spec.value == text:
             return spec
     raise ValueError(f"Specialization с текстом '{text}' не найдена.")
+
+async def kick_student(session: AsyncSession, student_id: int) -> User:
+    try:
+        student = await get_student_by_id(session, student_id)
+        student.group_id = None
+        await session.commit()
+
+        return student
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        await session.rollback()
+    finally:
+        await session.close()
+    

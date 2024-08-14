@@ -19,7 +19,7 @@ async def group_create(message: Message, state: FSMContext):
     session = await get_async_session()
     username = message.from_user.username
     try:
-        user = await rq.get_user(session, username)
+        user = await rq.get_user_by_username(session, username)
 
         if not user:
             await message.answer(f'Пользователь @{username} не найден, пройдите регистрацию', reply_markup=kb.start)
@@ -105,7 +105,7 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 async def group_join(message: Message, state: FSMContext):
     try:
         session = await get_async_session()
-        user = await rq.get_user(session, message.from_user.username)
+        user = await rq.get_user_by_username(session, message.from_user.username)
         groups_without_application_from_user = await rq.get_groups_without_application_from_user(session, user.id)
 
         await state.update_data(user_id=user.id)
@@ -144,7 +144,7 @@ async def group_application(callback: CallbackQuery, state: FSMContext):
 async def elder_application(message: Message):
     try:
         session = await get_async_session()
-        user = await rq.get_user(session, message.from_user.username)
+        user = await rq.get_user_by_username(session, message.from_user.username)
 
         application = await rq.get_application(session, ApplicationType.BECOME_ELDER, user.id, None)
         msg = f'Ваша заявка была отправлена *{ut.format_datetime(application.last_update_at)}*'

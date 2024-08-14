@@ -18,7 +18,7 @@ from .ungroup import router
 @router.message(lambda message: message.text == "Группа")
 async def group_menu(message: Message, state: FSMContext):
     session = await get_async_session()
-    user = await rq.get_user(session, message.from_user.username)
+    user = await rq.get_user_by_username(session, message.from_user.username)
     group = await rq.get_group_by_id_with_students(session, user.group_id, user.id)
     await session.close()
 
@@ -31,25 +31,45 @@ async def group_menu(message: Message, state: FSMContext):
     
     
 @router.callback_query(F.data == 'students')
-async def catalog(callback:CallbackQuery, state: FSMContext):
+async def students(callback:CallbackQuery, state: FSMContext):
     data = await state.get_data()
     group = data['group']
     
     await callback.message.edit_text('*Студенты*', parse_mode="Markdown", reply_markup=await kb.inline_students(group.students))
 
 @router.callback_query(lambda query: query.data.startswith('st_'))
-async def group_application(callback: CallbackQuery, state: FSMContext):
+async def student(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
-    students_fields = callback.data.split('_')
-    student_username = students_fields[2]
+    student_fields = callback.data.split('_')
+    student_username = student_fields[2]
 
+    try:
+        session = await get_async_session()
+        student = await rq.get_user_by_username(session, student_username)
+
+        await callback.message.edit_text(
+            f'*@{student.username}*\n{student.surname} {student.name}', 
+            parse_mode='Markdown', 
+            reply_markup=await kb.inline_student(student.id)
+        )
+
+    finally:
+        await session.close()
+
+@router.callback_query(lambda query: query.data.startswith('delete_student_'))
+async def student_kick(callback: CallbackQuery, state: FSMContext):
     session = await get_async_session()
-    student = await rq.get_user(session, student_username)
+    student_fields = callback.data.split('_')
+    student_id = int(student_fields[2])
+    print(student_fields, student_id)
 
+    former_student = await rq.kick_student(session, student_id)
+    print(former_student)
     await callback.message.edit_text(
-        f'*@{student.username}*\n{student.surname} {student.name}', 
-        parse_mode='Markdown', 
-        reply_markup=await kb.inline_student(student.id)
+        f'*@{former_student.username}* ({former_student.surname} {former_student.name}) выгнан(а) из группы',
+        parse_mode='Markdown'
     )
+
+    # await callback.message.answer(f"*{group_title.upper()}*", reply_markup=kb.group_menu, parse_mode="Markdown")
 
     

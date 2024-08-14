@@ -55,10 +55,23 @@ async def auth_user(session: AsyncSession, login: str, password: str):
     finally:
         await session.close()
     
-async def get_user(session: AsyncSession, username: str) -> User:
+async def get_user_by_username(session: AsyncSession, username: str) -> User:
     try:
         result = await session.execute(
             select(User).where(User.username == username)
+        )
+
+        user = result.scalars().one_or_none()
+        return user
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+async def get_student_by_id(session: AsyncSession, id: int) -> User:
+    try:
+        result = await session.execute(
+            select(User).where(User.id == id)
         )
 
         user = result.scalars().one_or_none()

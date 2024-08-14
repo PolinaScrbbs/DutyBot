@@ -39,6 +39,6 @@ async def inline_students(students):
 
 async def inline_student(user_id):
     keyboard = InlineKeyboardBuilder()
-    keyboard.row(InlineKeyboardButton(text='Выгнать', callback_data=f'st_delete_{user_id}'))
+    keyboard.row(InlineKeyboardButton(text='Выгнать', callback_data=f'delete_student_{user_id}'))
 
     return keyboard.as_markup()
