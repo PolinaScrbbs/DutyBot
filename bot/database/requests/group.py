@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.users import Specialization, Group, Application, User
-from .user import get_user_by_username, get_student_by_id
+from .user import get_user_by_username, get_user_by_id
 
 async def create_group(session: AsyncSession, title: str, specialization: Specialization, course_number: int, creator_username: str) -> Group:
     user = await get_user_by_username(session, creator_username)
@@ -60,11 +60,12 @@ async def get_group_by_id(session: AsyncSession, id: int) -> Group:
         print(f"Error: {e}")
         return None
     
-async def get_group_by_id_with_students(session: AsyncSession, group_id: int, user_id: int) -> Group:
+async def get_group_by_id_with_students_and_applications(session: AsyncSession, group_id: int, user_id: int) -> Group:
     try:
         result = await session.execute(
             select(Group).where(Group.id == group_id).options(
-                selectinload(Group.students.and_(User.id != user_id))
+                selectinload(Group.students.and_(User.id != user_id)),
+                selectinload(Group.applications)
             )
         )
         group = result.scalars().one_or_none()
@@ -116,7 +117,7 @@ async def get_specialization(text: str) -> Specialization:
 
 async def kick_student(session: AsyncSession, student_id: int) -> User:
     try:
-        student = await get_student_by_id(session, student_id)
+        student = await get_user_by_id(session, student_id)
         student.group_id = None
         await session.commit()
 

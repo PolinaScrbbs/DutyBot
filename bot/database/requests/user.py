@@ -68,7 +68,7 @@ async def get_user_by_username(session: AsyncSession, username: str) -> User:
         print(f"Error: {e}")
         return None
     
-async def get_student_by_id(session: AsyncSession, id: int) -> User:
+async def get_user_by_id(session: AsyncSession, id: int) -> User:
     try:
         result = await session.execute(
             select(User).where(User.id == id)

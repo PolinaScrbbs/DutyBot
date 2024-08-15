@@ -1,3 +1,4 @@
+from typing import Optional
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton, WebAppInfo,
                            InlineKeyboardMarkup, InlineKeyboardButton)
 
@@ -11,13 +12,16 @@ elder_main = ReplyKeyboardMarkup(keyboard=[
                         resize_keyboard=True,
                         input_field_placeholder='Выберите пункт меню')
 
-group_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Студенты', callback_data='students')],
-    [InlineKeyboardButton(text='Заявки', callback_data='grp_applications')],
-    [InlineKeyboardButton(text='Настройки', callback_data='settings')],
-    [InlineKeyboardButton(text='❌ Закрыть', callback_data='close')]
-    # [InlineKeyboardButton(text='Удалить группу', callback_data='group_delete')]
-])
+async def group_menu(application_count: Optional[str]):
+    group_menu = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text='Студенты', callback_data='students')],
+        [InlineKeyboardButton(text=f'Заявки {application_count}', callback_data='grp_applications')],
+        [InlineKeyboardButton(text='Настройки', callback_data='settings')],
+        [InlineKeyboardButton(text='❌ Закрыть', callback_data='close')]
+        # [InlineKeyboardButton(text='Удалить группу', callback_data='group_delete')]
+    ])
+
+    return group_menu
 
 async def inline_group_applications(applications):
     keyboard = InlineKeyboardBuilder()
@@ -27,14 +31,26 @@ async def inline_group_applications(applications):
     for j in range(0, len_range, 2):
         keyboard.row(
             InlineKeyboardButton(text=f"@{applications[j].sending.username} ({applications[j].sending.surname} {applications[j].sending.name})",
-                callback_data=f"grp_application{applications[j].id}_{applications[j].sending.id}"),
+                callback_data=f"grp_application_{applications[j].id}_{applications[j].sending.id}"),
             InlineKeyboardButton(text=f"{applications[j + 1].sending.username} ({applications[j + 1].sending.surname} {applications[j + 1].sending.name})", 
-                callback_data=f"grp_application{applications[j + 1].id}_{applications[j + 1].sending.id}")
+                callback_data=f"grp_application_{applications[j + 1].id}_{applications[j + 1].sending.id}")
         )
 
     if len(applications) % 2 != 0:
         keyboard.row(InlineKeyboardButton(text=f"@{applications[-1].sending.username} ({applications[-1].sending.surname} {applications[-1].sending.name})", 
-            callback_data=f"grp_application{applications[-1].id}_{applications[-1].sending.id}"))
+            callback_data=f"grp_application_{applications[-1].id}_{applications[-1].sending.id}"))
+
+    keyboard.row(InlineKeyboardButton(text='❌ Закрыть', callback_data='close'))
+
+    return keyboard.as_markup()
+
+async def inline_application(application):
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.row(
+        InlineKeyboardButton(text='Принять',callback_data=f'accept_application_{application.id}_{application.sending_id}'),
+        InlineKeyboardButton(text='Отклонить', callback_data=f'rejected_application_{application.id}_{application.sending_id}')
+    )
 
     keyboard.row(InlineKeyboardButton(text='❌ Закрыть', callback_data='close'))
 
