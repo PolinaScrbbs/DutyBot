@@ -64,12 +64,22 @@ async def student_kick(callback: CallbackQuery, state: FSMContext):
     print(student_fields, student_id)
 
     former_student = await rq.kick_student(session, student_id)
-    print(former_student)
+
     await callback.message.edit_text(
         f'*@{former_student.username}* ({former_student.surname} {former_student.name}) выгнан(а) из группы',
         parse_mode='Markdown'
     )
 
     # await callback.message.answer(f"*{group_title.upper()}*", reply_markup=kb.group_menu, parse_mode="Markdown")
+
+@router.callback_query(F.data == 'grp_applications')
+async def group_application_list(callback: CallbackQuery, state: FSMContext):
+    session = await get_async_session()
+    data = await state.get_data()
+    group = data['group']
+
+    applications = await rq.get_group_applications(session, group.id)
+
+    await callback.message.edit_text('*Заявки*', parse_mode='Markdown', reply_markup=await kb.inline_group_applications(applications))
 
     
