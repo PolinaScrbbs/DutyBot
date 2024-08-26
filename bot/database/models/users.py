@@ -106,6 +106,13 @@ class User(Base):
             raise Exception("Токен истек")
         except jwt.InvalidTokenError:
             raise Exception("Неверный токен")
+    @property
+    async def full_name(self) -> str:
+        return f"{self.surname} {self.name} {self.patronymic}"
+    
+    @property
+    async def dities_count(self) -> int:
+        return len(self.duties)
 
 class Token(Base):
     __tablename__ = "tokens"

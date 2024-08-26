@@ -1,4 +1,5 @@
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,3 +81,18 @@ async def get_user_by_id(session: AsyncSession, id: int) -> User:
     except Exception as e:
         print(f"Error: {e}")
         return None
+    
+# async def get_user_by_id_with_duties(session: AsyncSession, id: int) -> User:
+#     try:
+#         result = await session.execute(
+#             select(User).where(User.id == id).options(
+#                 selectinload(User.duties)
+#             )
+#         )
+
+#         user = result.scalar_one_or_none()
+#         return user
+
+#     except Exception as e:
+#         print(f"Error: {e}")
+#         return None
