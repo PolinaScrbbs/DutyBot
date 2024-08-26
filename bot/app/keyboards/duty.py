@@ -13,7 +13,7 @@ duty_menu = ReplyKeyboardMarkup(keyboard=[
                         input_field_placeholder='Выберите пункт меню')
 
 attendants = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='🔄', callback_data='remapFirst'), InlineKeyboardButton(text='🔄', callback_data='remapSecond')],
+    [InlineKeyboardButton(text='🔄', callback_data='replace_attendant_0'), InlineKeyboardButton(text='🔄', callback_data='replace_attendant_1')],
     [InlineKeyboardButton(text='✅Назначить', callback_data='attendants_assign')], 
     [InlineKeyboardButton(text='❌Отмена', callback_data='cancel')]
 ])

@@ -4,16 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.users import User, Duty
 
-async def assign_attendants(students: List[User], skipped_students: Optional[List[User]]) -> List[User]:
-    if skipped_students:
-        skipped_set = set(skipped_students)
-        available_students = [student for student in students if student not in skipped_set]
-    else:
-        available_students = students
-
+async def get_attendants(students: List[User]) -> List[User]:
     student_duties = []
 
-    for student in available_students:
+    for student in students:
         duties_count = await student.dities_count
         student_duties.append((student, duties_count))
     

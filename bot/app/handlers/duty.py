@@ -31,18 +31,18 @@ async def group_menu(message: Message, state: FSMContext):
 
 
 @router.message(lambda message: message.text == "Назначить дежурных")
-async def assign_attendant(message: Message, state: FSMContext):
+async def get_attendant(message: Message, state: FSMContext):
     session = await get_async_session()
     data = await state.get_data()
     group = data['group']
 
-    try:
-        skipped_students = data['skipped_students']
-    except:
-        skipped_students = None
+    students = data.get('students', None)
 
-    students = await rq.get_students(session, group.id)
-    attendants = await rq.assign_attendants(students, skipped_students)
+    if students is None:
+        students = await rq.get_students(session, group.id)
+        await state.update_data(students=students)
+
+    attendants = await rq.get_attendants(students)
     await state.update_data(attendants=attendants)
 
     full_name_1  = await attendants[0].full_name
@@ -50,7 +50,7 @@ async def assign_attendant(message: Message, state: FSMContext):
     await message.answer(f"Дежурные:\n{full_name_1}   {full_name_2}", reply_markup=kb.attendants)
 
 @router.callback_query(F.data == 'attendants_assign')
-async def assign(callback:CallbackQuery, state: FSMContext):
+async def assign_attendants(callback: CallbackQuery, state: FSMContext):
     session = await get_async_session()
     data = await state.get_data()
     attendants = data['attendants']
@@ -58,7 +58,26 @@ async def assign(callback:CallbackQuery, state: FSMContext):
     await rq.put_duty(session, attendants)
 
     await callback.message.edit_text('✅Дежурные установлены')
-    # await state.clear() 
+    # await state.clear()
+
+@router.callback_query(lambda query: query.data.startswith('replace_attendant_'))
+async def replace_attendant(callback: CallbackQuery, state: FSMContext):
+    attendant_fields = callback.data.split('_')
+    attendant_number = int(attendant_fields[2])
+    
+    data = await state.get_data()
+    students = data['students']
+    attendant = data['attendants'][attendant_number]
+
+    students = [student for student in students if student != attendant]
+    await state.update_data(students=students)
+
+    attendants = await rq.get_attendants(students)
+    await state.update_data(attendants=attendants)
+
+    full_name_1  = await attendants[0].full_name
+    full_name_2 = await attendants[1].full_name
+    await callback.message.edit_text(f"Дежурные:\n{full_name_1}   {full_name_2}", reply_markup=kb.attendants)
 
 
     
