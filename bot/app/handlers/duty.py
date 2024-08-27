@@ -16,16 +16,9 @@ async def group_menu(message: Message, state: FSMContext):
     await session.close()
 
     await state.update_data(data={
-        "user": user,
+        # "user": user,
         "group": group
     })
-
-    # applications_count = len(group.applications)
-
-    # if applications_count != 0:
-    #     applications_count = f'({applications_count})'
-    # else:
-    #     applications_count = None
     
     await message.answer("Выберите пунк из меню", parse_mode="Markdown", reply_markup=kb.duty_menu)
 
@@ -45,9 +38,14 @@ async def get_attendant(message: Message, state: FSMContext):
     attendants = await rq.get_attendants(students)
     await state.update_data(attendants=attendants)
 
-    full_name_1  = await attendants[0].full_name
-    full_name_2 = await attendants[1].full_name
-    await message.answer(f"Дежурные:\n{full_name_1}   {full_name_2}", reply_markup=kb.attendants)
+    await message.answer(
+        f"🧹*Дежурные*",
+        parse_mode="Markdown",
+        reply_markup=await kb.attendants(
+            f"{attendants[0].surname} {attendants[0].name}", 
+            f"{attendants[1].surname} {attendants[1].name}"
+        )   
+    )
 
 @router.callback_query(F.data == 'attendants_assign')
 async def assign_attendants(callback: CallbackQuery, state: FSMContext):
@@ -57,8 +55,8 @@ async def assign_attendants(callback: CallbackQuery, state: FSMContext):
 
     await rq.put_duty(session, attendants)
 
-    await callback.message.edit_text('✅Дежурные установлены')
-    # await state.clear()
+    await callback.message.edit_text('✅Дежурные установлены', reply_markup=kb.elder_main)
+    await state.clear()
 
 @router.callback_query(lambda query: query.data.startswith('replace_attendant_'))
 async def replace_attendant(callback: CallbackQuery, state: FSMContext):
@@ -67,17 +65,32 @@ async def replace_attendant(callback: CallbackQuery, state: FSMContext):
     
     data = await state.get_data()
     students = data['students']
-    attendant = data['attendants'][attendant_number]
 
-    students = [student for student in students if student != attendant]
-    await state.update_data(students=students)
+    if len(students) >= 3:
+        attendant = data['attendants'][attendant_number]
+        students = [student for student in students if student != attendant]
+        await state.update_data(students=students)
 
-    attendants = await rq.get_attendants(students)
-    await state.update_data(attendants=attendants)
+        attendants = await rq.get_attendants(students)
+        await state.update_data(attendants=attendants)
 
-    full_name_1  = await attendants[0].full_name
-    full_name_2 = await attendants[1].full_name
-    await callback.message.edit_text(f"Дежурные:\n{full_name_1}   {full_name_2}", reply_markup=kb.attendants)
+        await callback.message.edit_text(
+            f"🧹*Дежурные*",
+            parse_mode="Markdown", 
+            reply_markup=await kb.attendants(
+                f"{attendants[0].surname} {attendants[0].name}", 
+                f"{attendants[1].surname} {attendants[1].name}"
+            )
+        )
+    else:
+        await callback.message.edit_text("*Куда гонишь, брат?*", parse_mode="Markdown")
+
+        group = data['group']
+
+        await state.clear()
+        await state.update_data(group=group)
+
+
 
 
     

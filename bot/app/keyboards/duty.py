@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton, WebAppInfo,
                            InlineKeyboardMarkup, InlineKeyboardButton)
 
@@ -12,8 +12,14 @@ duty_menu = ReplyKeyboardMarkup(keyboard=[
                         resize_keyboard=True,
                         input_field_placeholder='Выберите пункт меню')
 
-attendants = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='🔄', callback_data='replace_attendant_0'), InlineKeyboardButton(text='🔄', callback_data='replace_attendant_1')],
-    [InlineKeyboardButton(text='✅Назначить', callback_data='attendants_assign')], 
-    [InlineKeyboardButton(text='❌Отмена', callback_data='cancel')]
-])
+async def attendants(attendant_1_fullname: str, attendant_2_fullname: str) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.row(
+        InlineKeyboardButton(text=f'🔄 {attendant_1_fullname}', callback_data='replace_attendant_0'),
+        InlineKeyboardButton(text=f'🔄 {attendant_2_fullname}', callback_data='replace_attendant_1')
+    )
+    keyboard.row(InlineKeyboardButton(text='✅Назначить дежурных', callback_data='attendants_assign'))
+    keyboard.row(InlineKeyboardButton(text='❌Отмена', callback_data='cancel'))
+
+    return keyboard.as_markup()
