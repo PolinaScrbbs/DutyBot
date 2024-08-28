@@ -153,3 +153,7 @@ class Duty(Base):
     date = Column(DateTime(True), server_default=func.now())
 
     attendant = relationship("User", back_populates="duties")
+
+    @property
+    async def formatted_date(self) -> str:
+        return self.date.strftime('%H:%M %d-%m-%Y')

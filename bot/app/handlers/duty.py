@@ -90,6 +90,23 @@ async def replace_attendant(callback: CallbackQuery, state: FSMContext):
         await state.clear()
         await state.update_data(group=group)
 
+@router.message(lambda message: message.text == "Список дежурств")
+async def duty_list(message: Message, state: FSMContext):
+    session = await get_async_session()
+
+    data = await state.get_data()
+    group = data['group']
+
+    duties = await rq.get_group_duties(session, group.id)
+
+    msg = "🧹*Дежурства:*\n\n"
+
+    for duty in duties:
+        attendant_full_name = await duty.attendant.full_name
+        duty_date = await duty.formatted_date
+        msg += f"👨‍🎓 *@{duty.attendant.username}* ({attendant_full_name}) дежурил ⏰*{duty_date}*\n"
+
+    await message.answer(msg, parse_mode="Markdown")
 
 
 
