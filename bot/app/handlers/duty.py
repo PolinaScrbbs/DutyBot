@@ -104,10 +104,32 @@ async def duty_list(message: Message, state: FSMContext):
     for duty in duties:
         attendant_full_name = await duty.attendant.full_name
         duty_date = await duty.formatted_date
-        msg += f"👨‍🎓 *@{duty.attendant.username}* ({attendant_full_name}) дежурил ⏰*{duty_date}*\n"
+        msg += (
+            f"👨‍🎓 *@{duty.attendant.username}* ({attendant_full_name})\n"
+            f"Дежурил ⏰*{duty_date}*\n\n"
+        )
 
     await message.answer(msg, parse_mode="Markdown")
 
+@router.message(lambda message: message.text == "Количество дежурств")
+async def duty_count(message: Message, state: FSMContext):
+    session = await get_async_session()
+
+    data = await state.get_data()
+    group = data['group']
+
+    duties_count = await rq.get_group_duties_count(session, group.id)
+
+    msg = "🧹*Количество дежурств:*\n\n"
+    
+    for duty in duties_count:
+        msg += (
+            f"*@{duty['username']}* ({duty['full_name']})\n"
+            f"Дежурил(а) *{duty['duties_count']} раз(а)*\n"
+            f"Последнее дежурство: *{duty['last_duty_date'].strftime('%H:%M %d-%m-%Y')}*\n\n"
+        )
+
+    await message.answer(msg, parse_mode="Markdown")
 
 
     

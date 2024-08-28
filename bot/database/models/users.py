@@ -1,9 +1,10 @@
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table, CheckConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table, CheckConstraint, select
 from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
 from enum import Enum as BaseEnum
+from database import get_async_session
 from config import SECRET_KEY
 
 class Base(DeclarativeBase):
@@ -109,10 +110,6 @@ class User(Base):
     @property
     async def full_name(self) -> str:
         return f"{self.surname} {self.name} {self.patronymic}"
-    
-    @property
-    async def dities_count(self) -> int:
-        return len(self.duties)
 
 class Token(Base):
     __tablename__ = "tokens"

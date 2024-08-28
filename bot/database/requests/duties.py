@@ -1,6 +1,7 @@
-from typing import List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -46,3 +47,41 @@ async def get_group_duties(session: AsyncSession, group_id: int) -> List[Duty]:
         print(f"Error: {e}")
         return None
     
+    finally:
+        await session.close()
+    
+async def get_group_duties_count(session: AsyncSession, group_id: int) -> List[dict]:
+    try:
+        result = await session.execute(
+            select(
+                User.username,
+                User.surname,
+                User.name,
+                User.patronymic,
+                func.count(Duty.id).label('duties_count'),
+                func.max(Duty.date).label('last_duty_date')
+            )
+            .join(Duty.attendant)
+            .where(User.group_id == group_id)
+            .group_by(User.id)
+            .order_by(func.count(Duty.id).desc(), User.surname)
+        )
+
+        duties_count = [
+            {
+                "username": row['username'],
+                "full_name": f"{row['surname']} {row['name']} {row['patronymic']}",
+                "duties_count": row['duties_count'],
+                "last_duty_date": row['last_duty_date']
+            }
+            for row in result.mappings().all()
+        ]
+
+        return duties_count
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+    
+    finally:
+        await session.close()    
