@@ -21,16 +21,15 @@ async def cmd_start(message: Message):
         keyboard = kb.start
 
         if user and await rq.auth_check(session, user.id):
-            msg = f'С возвращением *{username}*👋 \nВыбери пункт из меню🔍'
+            msg = f'С возвращением, *{user.name}*👋 \nВыбери пункт из меню🔍'
             keyboard = kb.ungroup_main
-            
-            group = await rq.get_group_by_id(session, user.group_id)
 
-            if group != None:
-                pass # keyboard = kb.ungroup_main
+            if user.group_id != None:
+                if user.role == Role.STUDENT:
+                    keyboard = kb.student_main
 
-            if user.role == Role.ELDER:
-                keyboard = kb.elder_main
+                elif user.role == Role.ELDER:
+                    keyboard = kb.elder_main
 
         await message.answer(msg, reply_markup=keyboard, parse_mode="Markdown")
         

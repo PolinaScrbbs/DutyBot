@@ -84,4 +84,27 @@ async def get_group_duties_count(session: AsyncSession, group_id: int) -> List[d
         return []
     
     finally:
-        await session.close()    
+        await session.close()
+
+async def get_user_duties(session: AsyncSession, user_id: int) ->  Tuple[Optional[Tuple[List[Duty]]], Optional[Duty]]:
+    try:
+        result = await session.execute(
+            select(Duty).where(Duty.attendant_id == user_id)
+            .order_by(desc(Duty.date))
+            .options(selectinload(Duty.attendant))
+        )
+
+        duties = result.scalars().all()
+
+        if not duties:
+            return None, None
+        
+        last_duty = duties[0]
+        return duties, last_duty
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+    
+    finally:
+        await session.close()

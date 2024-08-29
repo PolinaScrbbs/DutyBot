@@ -3,9 +3,12 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 import app.keyboards as kb
+import app.utils as ut
 import database.requests as rq
 
+
 from database import get_async_session
+from database.models import Role
 from .group import router
 
 @router.message(lambda message: message.text == "Дежурства")
@@ -13,14 +16,36 @@ async def group_menu(message: Message, state: FSMContext):
     session = await get_async_session()
     user = await rq.get_user_by_username(session, message.from_user.username)
     group = await rq.get_group_by_id_with_students_and_applications(session, user.group_id, user.id)
-    await session.close()
-
+    
     await state.update_data(data={
         # "user": user,
         "group": group
     })
-    
-    await message.answer("Выберите пунк из меню", parse_mode="Markdown", reply_markup=kb.duty_menu)
+
+    msg = "Выберите пунк из меню"
+    keyboard = kb.duty_menu
+
+    if user.role == Role.STUDENT:
+        keyboard = kb.student_main
+        
+        duties, last_duty = await rq.get_user_duties(session, user.id)
+        if duties:
+            duties_count = await user.duties_count(session=session)
+            last_duty_date = await last_duty.formatted_date
+
+            msg = ''
+            msg += (
+                f"Общее количество дежурств *{duties_count}*\n"
+                f"Последнее дежурство *{last_duty_date}*\n\n"
+            )
+
+            msg = await ut.create_duties_msg(msg, duties)
+            
+        else:
+            msg = "У вас нет дежурств"
+
+    await message.answer(msg, parse_mode="Markdown", reply_markup=keyboard)
+    await session.close()
 
 
 @router.message(lambda message: message.text == "Назначить дежурных")
@@ -98,16 +123,7 @@ async def duty_list(message: Message, state: FSMContext):
     group = data['group']
 
     duties = await rq.get_group_duties(session, group.id)
-
-    msg = "🧹*Дежурства:*\n\n"
-
-    for duty in duties:
-        attendant_full_name = await duty.attendant.full_name
-        duty_date = await duty.formatted_date
-        msg += (
-            f"👨‍🎓 *@{duty.attendant.username}* ({attendant_full_name})\n"
-            f"Дежурил ⏰*{duty_date}*\n\n"
-        )
+    msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
 
     await message.answer(msg, parse_mode="Markdown")
 

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func, Enum, Table, CheckConstraint, select
 from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
 from enum import Enum as BaseEnum
+from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_async_session
 from config import SECRET_KEY
 
@@ -110,6 +111,12 @@ class User(Base):
     @property
     async def full_name(self) -> str:
         return f"{self.surname} {self.name} {self.patronymic}"
+    
+    async def duties_count(self, session: AsyncSession) -> int:
+        result = await session.execute(
+            select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
+        )
+        return result.scalar_one()
 
 class Token(Base):
     __tablename__ = "tokens"

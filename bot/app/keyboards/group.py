@@ -12,6 +12,14 @@ elder_main = ReplyKeyboardMarkup(keyboard=[
                         resize_keyboard=True,
                         input_field_placeholder='Выберите пункт меню')
 
+student_main = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Дежурства')],
+    [KeyboardButton(text='Профиль')],
+    [KeyboardButton(text='Создатель', web_app=WebAppInfo(url='https://github.com/PolinaScrbbs'))]
+],
+                        resize_keyboard=True,
+                        input_field_placeholder='Выберите пункт меню')
+
 async def group_menu(application_count: Optional[str]):
     group_menu = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='Студенты', callback_data='students')],
