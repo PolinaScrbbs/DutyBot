@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 
 from database import get_async_session
 import app.keyboards as kb
@@ -11,7 +12,7 @@ from .. import Role
 router = Router()
 
 @router.message(CommandStart())
-async def cmd_start(message: Message):
+async def cmd_start(message: Message, state: FSMContext):
     session = await get_async_session()
     username = message.from_user.username
     try:
@@ -25,6 +26,15 @@ async def cmd_start(message: Message):
             keyboard = kb.ungroup_main
 
             if user.group_id != None:
+                group = await rq.get_group_by_id_with_students_and_applications(session, user.group_id, user.id)
+
+                await state.update_data({
+                    message.from_user.id: {
+                        "user": user,
+                        "group": group
+                    }
+                })
+                
                 if user.role == Role.STUDENT:
                     keyboard = kb.student_main
 

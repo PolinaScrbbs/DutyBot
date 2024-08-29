@@ -8,11 +8,11 @@ from sqlalchemy.orm import selectinload
 
 from ..models.users import User, Duty, Group
 
-async def get_attendants(students: List[User]) -> List[User]:
+async def get_attendants(session: AsyncSession, students: List[User]) -> List[User]:
     student_duties = []
 
     for student in students:
-        duties_count = await student.dities_count
+        duties_count = await student.duties_count(session)
         student_duties.append((student, duties_count))
     
     sorted_students = sorted(student_duties, key=lambda x: x[1])

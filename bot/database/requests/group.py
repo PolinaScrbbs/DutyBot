@@ -145,6 +145,4 @@ async def get_students(session: AsyncSession, group_id: int) -> List[User]:
 
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        await session.close()
     
