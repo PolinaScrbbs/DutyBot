@@ -12,8 +12,6 @@ from .group import router
 
 @router.message(lambda message: message.text == "Дежурства")
 async def group_menu(message: Message, state: FSMContext):
-    session = await get_async_session()
-
     data = await state.get_data()
     user_data = data.get(message.from_user.id, {})
     user = user_data.get("user")
@@ -22,8 +20,9 @@ async def group_menu(message: Message, state: FSMContext):
     keyboard = kb.duty_menu
 
     if user.role == Role.STUDENT:
+        session = await get_async_session()
         keyboard = kb.student_main
-            
+        
         duties, last_duty = await rq.get_user_duties(session, user.id)
         if duties:
             duties_count = await user.duties_count(session=session)
@@ -34,11 +33,11 @@ async def group_menu(message: Message, state: FSMContext):
                 f"Последнее дежурство *{last_duty_date}*\n\n"
             )
 
-            msg = await ut.create_duties_msg(msg, duties)
-                
+            msg = await ut.create_duties_msg(msg, duties)      
         else:
             msg = "У вас нет дежурств"
 
+        await session.close()
     await message.answer(msg, parse_mode="Markdown", reply_markup=keyboard)
 
 
