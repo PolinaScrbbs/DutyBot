@@ -2,15 +2,15 @@ from dotenv import load_dotenv
 import os
 import urllib.parse
 
-#Очистка переменных перед созданием новых
-os.environ.pop('DB_HOST', None)
-os.environ.pop('DB_PORT', None)
-os.environ.pop('DB_NAME', None)
-os.environ.pop('DB_USER', None)
-os.environ.pop('DB_PASS', None)
-os.environ.pop('SECRET_KEY', None)
-os.environ.pop('BOT_TOKEN', None)
-os.environ.pop('DATABASE_URL', None)
+# Очистка переменных перед созданием новых
+os.environ.pop("DB_HOST", None)
+os.environ.pop("DB_PORT", None)
+os.environ.pop("DB_NAME", None)
+os.environ.pop("DB_USER", None)
+os.environ.pop("DB_PASS", None)
+os.environ.pop("SECRET_KEY", None)
+os.environ.pop("BOT_TOKEN", None)
+os.environ.pop("DATABASE_URL", None)
 
 load_dotenv()
 
