@@ -11,9 +11,6 @@ from database import get_async_session
 from .auth import router
 
 
-#Создание группы============================================================================================================
-
-
 @router.message(lambda message: message.text == "Создать группу")
 async def group_create(message: Message, state: FSMContext):
     session = await get_async_session()
@@ -30,22 +27,22 @@ async def group_create(message: Message, state: FSMContext):
         elif user.role is not Role.ELDER:
             await message.answer(f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время', reply_markup=kb.ungroup_main)
 
-        elif user.group_id != None:
+        elif user.group_id is not None:
             await message.answer(f'"Староста" может создать только 1 группу', reply_markup=kb.ungroup_main)
 
         else:
             await message.answer(f'Введите название группы (Не номер)')
             await state.set_state(st.GroupCreate.title)
+            await state.update_data({message.from_user.id: {"user": user}})
 
     finally:
         await session.close()
 
 @router.message(st.GroupCreate.title)
 async def group_title(message: Message, state: FSMContext):
-    
     title = message.text
-    await state.update_data(creator=message.from_user.username)
-    await state.update_data(title=title)
+    user_id = message.from_user.id
+    await state.update_data({user_id: {"title": title, "creator": message.from_user.username}})
 
     try:
         session = await get_async_session()
@@ -68,23 +65,25 @@ async def group_specialization(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
 
     specialization = callback.data.split('_', 1)[1]
-    await callback.message.edit_text(f'Вы выбрали *{specialization}*', parse_mode='Markdown')
-    await state.update_data(specialization=specialization)
+    user_id = callback.from_user.id
+    await state.update_data({user_id: {"specialization": specialization}})
 
+    await callback.message.edit_text(f'Вы выбрали *{specialization}*', parse_mode='Markdown')
     await callback.message.answer('Выберите свой курс обучения', reply_markup=kb.course_number)
 
 @router.callback_query(lambda query: query.data.startswith('course_number_'))
 async def group_course_number(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
+    user_id = callback.from_user.id
     try:
         course_number = int(callback.data.split('_')[2])
         await callback.message.edit_text(f'Вы выбрали *{course_number} курс*', parse_mode='Markdown')
 
-        session= await get_async_session()
+        session = await get_async_session()
         data = await state.get_data()
-        title = data["title"]
-        specialization = await rq.get_specialization(data["specialization"])
-        username = data["creator"]
+        title = data[user_id]["title"]
+        specialization = await rq.get_specialization(data[user_id]["specialization"])
+        username = data[user_id]["creator"]
         
         group = await rq.create_group(session, title, specialization, course_number, username)
 
@@ -97,8 +96,8 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         await callback.message.answer(f"{e}")
-
-#Вступление в группу ============================================================================================================>
+    finally:
+        await session.close()
 
 
 @router.message(lambda message: message.text == "Вступить в группу")
@@ -108,9 +107,9 @@ async def group_join(message: Message, state: FSMContext):
         user = await rq.get_user_by_username(session, message.from_user.username)
         groups_without_application_from_user = await rq.get_groups_without_application_from_user(session, user.id)
 
-        await state.update_data(user_id=user.id)
+        await state.update_data({message.from_user.id: {"user_id": user.id}})
 
-        if groups_without_application_from_user != []:
+        if groups_without_application_from_user:
             await message.answer('Выберите группу', parse_mode='Markdown', reply_markup=await kb.inline_groups(groups_without_application_from_user))
         else:
             await message.answer('Группы не найдены', parse_mode='Markdown', reply_markup=kb.ungroup_main)
@@ -118,26 +117,25 @@ async def group_join(message: Message, state: FSMContext):
     finally:
         await session.close()
 
+
 @router.callback_query(lambda query: query.data.startswith('group_'))
 async def group_application(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
+    try:
+        session = await get_async_session()
+        user_id = (await state.get_data())[callback.from_user.id]["user_id"]
+        group_fields = callback.data.split('_')
+        group_id = int(group_fields[1])
+        group_title = group_fields[2]
 
-    session = await get_async_session()
-    data = await state.get_data()
-    user_id = data["user_id"]
-    group_fields = callback.data.split('_')
-    group_id = int(group_fields[1])
-    group_title = group_fields[2]
+        request = await rq.send_application(session, ApplicationType.GROUP_JOIN, user_id, group_id)
 
-    request = await rq.send_application(session, ApplicationType.GROUP_JOIN, user_id, group_id)
-
-    if request:
-        await callback.message.edit_text(f'Заявка на вступление в *{group_title}* отправлена', parse_mode='Markdown')
-    else:
-        await callback.message.edit_text(f'Не удалось отправить заявку на вступление')
-
-
-#Стать старостой ============================================================================================================>
+        if request:
+            await callback.message.edit_text(f'Заявка на вступление в *{group_title}* отправлена', parse_mode='Markdown')
+        else:
+            await callback.message.edit_text(f'Не удалось отправить заявку на вступление')
+    finally:
+        await session.close()
 
 
 @router.message(lambda message: message.text == "Стать старостой")
@@ -147,13 +145,12 @@ async def elder_application(message: Message):
         user = await rq.get_user_by_username(session, message.from_user.username)
 
         application = await rq.get_application(session, ApplicationType.BECOME_ELDER, user.id, None)
-        msg = f'Ваша заявка была отправлена *{ut.format_datetime(application.last_update_at)}*'
-        
         if application is None:
             application = await rq.send_application(session, ApplicationType.BECOME_ELDER, user.id, None)
             msg = 'Заявка на получение роли *"Староста"* отправлена'
+        else:
+            msg = f'Ваша заявка была отправлена *{ut.format_datetime(application.last_update_at)}*'
 
         await message.answer(msg, parse_mode='Markdown')
-
     finally:
         await session.close()
