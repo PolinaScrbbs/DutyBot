@@ -114,3 +114,27 @@ async def get_user_duties(
 
     finally:
         await session.close()
+
+    
+async def get_last_three_duties(session: AsyncSession, user_id: int) -> List[dict]:
+    query = (
+        select(Duty)
+        .options(selectinload(Duty.attendant))
+        .where(Duty.attendant_id == user_id)
+        .order_by(Duty.date.desc())
+        .limit(3)
+    )
+
+    result = await session.execute(query)
+    duties = result.scalars().all()
+
+    formatted_duties = [
+        {
+            "id": duty.id,
+            "date": await duty.formatted_date,
+            "attendant_name": await duty.attendant.full_name,
+        }
+        for duty in duties
+    ]
+
+    return formatted_duties

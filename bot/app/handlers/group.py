@@ -34,6 +34,61 @@ async def group_menu(message: Message, state: FSMContext):
     )
 
 
+@router.message(lambda message: message.text == "Профиль")
+async def profile(message: Message, state: FSMContext):
+    session = await get_async_session()
+    data = await state.get_data()
+    telegram_id = message.from_user.id
+
+    if telegram_id not in data:
+        await message.answer("Ваши данные не найдены. Пожалуйста, начните сначала.")
+        return
+
+    user = data[telegram_id]["user"]
+    group = data[telegram_id]["group"]
+
+    user_photos = await message.bot.get_user_profile_photos(user_id=telegram_id)
+
+    profile_title = "<b>👤 Мой Профиль</b>"
+    username = user.username
+    full_name = await user.full_name
+    group_name = group.title
+    avatar_url = None
+    icon = None
+    user_link = None
+
+    if user.username != message.from_user.username:
+        if user_photos.total_count > 0:
+            file_id = user_photos.photos[0][-1].file_id
+
+            file = await message.bot.get_file(file_id)
+            avatar_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file.file_path}"
+            icon = "🖼️"
+
+        profile_title = f"<b>👤 Профиль</b> <i><a href='{user_link}'>@{username}</a></i>" 
+        
+        user_link = f"https://t.me/{username}"
+
+    last_three_duties = await rq.get_last_three_duties(session, user.id)
+    await session.close()
+
+    profile_text = f"""
+{profile_title}{f'<a href="{avatar_url}">{icon}</a>' if avatar_url else ''}\n
+<b>Полное имя:</b> {full_name}
+{f"<b>Группа:</b> {group_name}" if group_name else "Не состоит в группе"}
+    """
+
+    if last_three_duties:
+        profile_text += "\n<b>Последние дежурства:</b>\n"
+        for duty in last_three_duties:
+            profile_text += f"🔸 {duty['date']}\n"
+    else:
+        profile_text += "\n<b>Последние дежурства:</b> Нет записей\n"
+
+
+    await message.answer(profile_text, parse_mode="HTML")
+
+
 @router.callback_query(F.data == "students")
 async def students(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
