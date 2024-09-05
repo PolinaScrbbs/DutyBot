@@ -8,7 +8,7 @@ import database.requests as rq
 
 from .. import Role, ApplicationType
 from database import get_async_session
-from .auth import router
+from .admin import router
 
 
 @router.message(lambda message: message.text == "Создать группу")

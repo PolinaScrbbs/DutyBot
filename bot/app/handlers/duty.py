@@ -8,7 +8,7 @@ import database.requests as rq
 
 from database import get_async_session
 from database.models import Role
-from .group import router
+from .applications import router
 
 
 @router.message(lambda message: message.text == "Дежурства")

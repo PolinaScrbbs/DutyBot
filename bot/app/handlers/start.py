@@ -7,7 +7,7 @@ from database import get_async_session
 import app.keyboards as kb
 import database.requests as rq
 
-from .. import Role
+from .. import Role, ApplicationType
 
 router = Router()
 
@@ -24,22 +24,35 @@ async def cmd_start(message: Message, state: FSMContext):
 
         if user and await rq.auth_check(session, user.id):
             msg = f"С возвращением, *{user.name}*👋 \nВыбери пункт из меню🔍"
-            keyboard = kb.ungroup_main
 
-            if user.group_id != None:
-                group = await rq.get_group_by_id_with_students_and_applications(
-                    session, user.group_id, user.id
+            if user.role == Role.ADMIN:
+                await state.update_data({message.from_user.id: {"user": user}})
+
+                admin_applications = await rq.get_applications(
+                    session, ApplicationType.BECOME_ELDER, None
                 )
+                admin_applications_count = len(admin_applications)
+                print(admin_applications_count)
 
-                await state.update_data(
-                    {message.from_user.id: {"user": user, "group": group}}
-                )
+                keyboard = await kb.admin_menu(admin_applications_count)
 
-                if user.role == Role.STUDENT:
-                    keyboard = kb.student_main
+            else:
+                keyboard = kb.ungroup_main
 
-                elif user.role == Role.ELDER:
-                    keyboard = kb.elder_main
+                if user.group_id != None:
+                    group = await rq.get_group_by_id_with_students_and_applications(
+                        session, user.group_id, user.id
+                    )
+
+                    await state.update_data(
+                        {message.from_user.id: {"user": user, "group": group}}
+                    )
+
+                    if user.role == Role.STUDENT:
+                        keyboard = kb.student_main
+
+                    elif user.role == Role.ELDER:
+                        keyboard = kb.elder_main
 
         await message.answer(msg, reply_markup=keyboard, parse_mode="Markdown")
 

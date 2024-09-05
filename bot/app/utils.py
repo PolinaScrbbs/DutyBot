@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List
 
-from database.models import Duty
+from database.models import User, Role, Duty
 
 
 def format_datetime(dt: datetime) -> str:
@@ -24,3 +24,13 @@ async def create_duties_msg(initial_line: str, duties: List[Duty]) -> str:
         )
 
     return msg
+
+
+async def admin_check(user: User) -> Exception:
+    if user.role != Role.ADMIN:
+        raise Exception("Вы не имеете прав")
+
+
+async def elder_check(user: User) -> Exception:
+    if user.role not in [Role.ELDER, Role.ADMIN]:
+        raise Exception("Вы не имеете прав")

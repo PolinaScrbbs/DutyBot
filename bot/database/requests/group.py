@@ -4,7 +4,14 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.users import Role, Specialization, Group, Application, User
+from ..models.users import (
+    Role,
+    Specialization,
+    Group,
+    Application,
+    User,
+    ApplicationStatus,
+)
 from .user import get_user_by_username, get_user_by_id
 
 
@@ -75,7 +82,11 @@ async def get_group_by_id_with_students_and_applications(
             .where(Group.id == group_id)
             .options(
                 selectinload(Group.students.and_(User.id != user_id)),
-                selectinload(Group.applications),
+                selectinload(
+                    Group.applications.and_(
+                        Application.status == ApplicationStatus.SENT
+                    )
+                ),
             )
         )
         group = result.scalars().one_or_none()

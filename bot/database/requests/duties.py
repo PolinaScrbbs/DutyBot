@@ -115,7 +115,7 @@ async def get_user_duties(
     finally:
         await session.close()
 
-    
+
 async def get_last_three_duties(session: AsyncSession, user_id: int) -> List[dict]:
     query = (
         select(Duty)
