@@ -17,7 +17,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
 from enum import Enum as BaseEnum
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_async_session
 from config import SECRET_KEY
 
 
