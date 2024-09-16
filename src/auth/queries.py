@@ -1,11 +1,10 @@
-from typing import List, Optional
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import User
-from .schemes import UserCreate
+from ..user.queries import get_user_by_username
+
+from ..user.models import User, Token
+from ..user.schemes import UserCreate
 
 async def registration_user(
     session: AsyncSession, user_create: UserCreate
@@ -22,22 +21,28 @@ async def registration_user(
 
     return user
 
-async def get_users_list(
-    session: AsyncSession, skip: Optional[int], limit: Optional[int]
-) -> List[User]:
+async def login(
+    session: AsyncSession, login: str, password: str
+) -> Token:
     
-    result = await session.execute(
-        select(User)
-        .options(
-            selectinload(User.created_group),
-            selectinload(User.group),
-            selectinload(User.token)
-        )
-        .offset(skip)
-        .limit(limit)
-    )
+    user = await get_user_by_username(session, login)
 
-    return result.scalars().all()
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    correct_password = await user.check_password(password)
+
+    if not correct_password:
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    
+    token = await user.generate_token()
+    token = Token(user_id=user.id, token=token)
+    
+    session.add(token)
+    await session.commit()
+
+    return token
+
 
     
             

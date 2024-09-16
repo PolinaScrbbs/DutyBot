@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from config import DATABASE_URL
 
-from src.auth.models import Base
+from src.user.models import Base
 
 config = context.config
 section = config.config_ini_section

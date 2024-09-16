@@ -10,7 +10,7 @@ from sqlalchemy import (
     func,
     Enum,
 )
-from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
+from sqlalchemy.orm import relationship
 from enum import Enum as BaseEnum
 from config import SECRET_KEY
 
@@ -52,12 +52,12 @@ class User(Base):
             password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
 
-    def check_password(self, password: str) -> bool:
+    async def check_password(self, password: str) -> bool:
         return bcrypt.checkpw(
             password.encode("utf-8"), self.hashed_password.encode("utf-8")
         )
 
-    def generate_token(self, expires_in: int = 3600) -> str:
+    async def generate_token(self, expires_in: int = 3600) -> str:
         payload = {
             "user_id": self.id,
             "exp": datetime.now(timezone.utc) + timedelta(seconds=expires_in),
@@ -85,10 +85,10 @@ class User(Base):
         
     async def to_pydantic(self) -> BaseUser:
         return BaseUser(
-            id=self.id,
             role=self.role,
             username=self.username,
             full_name=self.full_name,
+            group_id=self.group_id,
             created_at=self.created_at
         )
 
