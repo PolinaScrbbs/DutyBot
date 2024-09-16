@@ -1,26 +1,9 @@
-import asyncio
-import logging
+from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from aiogram import Bot, Dispatcher
+from .auth.users import router
 
-from config import BOT_TOKEN
-from app.handlers.special import router
+app = FastAPI()
 
+app.include_router(router, tags=["users"])
 
-async def main():
-    bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher()
-    dp.include_router(router)
-
-    try:
-        print("Бот запущен")
-        await dp.start_polling(bot)
-    except (KeyboardInterrupt, SystemExit):
-        print("Бот выключен вручную")
-    finally:
-        await bot.session.close()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
