@@ -1,3 +1,4 @@
+from typing import Optional
 import bcrypt
 from fastapi import HTTPException, status
 import jwt
@@ -100,7 +101,7 @@ class Token(Base):
 
     user = relationship("User", back_populates="token")
 
-    async def verify_token(self, session: AsyncSession, user: User):
+    async def verify_token(self, session: AsyncSession, user: Optional[User]):
         try:
             jwt.decode(self.token, SECRET_KEY, algorithms=["HS256"])
             return None, self
@@ -115,7 +116,14 @@ class Token(Base):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    async def refresh_token(self, session: AsyncSession, user: User):
+    async def refresh_token(self, session: AsyncSession, user: Optional[User]):
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Expired token",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+
         new_token = await user.generate_token()
 
         self.token = new_token

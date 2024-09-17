@@ -1,9 +1,10 @@
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..user.queries import get_user_by_username
-
+from ..database import get_session
+from ..user.queries import get_user_by_username, get_user_by_id
 from ..user.models import User, Token
 from ..user.schemes import UserCreate
 
@@ -61,6 +62,27 @@ async def login(
     
     return msg, token
 
+async def get_token(session:AsyncSession, token: str) -> Token:
+    result = await session.execute(
+        select(Token).where(Token.token==token)
+    )
 
+    return result.scalar_one_or_none()
+
+async def verify_token_and_get_user(session: AsyncSession, token: str) -> User:
+    token = await get_token(session, token)
+
+    if token is None:
+        raise HTTPException(status_code=400, detail="Token not found")
     
-            
+    await token.verify_token(session, None)
+    user = await get_user_by_id(session, token.user_id)
+
+    return user
+
+async def get_current_user(
+    session: AsyncSession = Depends(get_session),
+    token: str =  Depends(OAuth2PasswordBearer(tokenUrl="token"))
+) -> User:
+    user = await verify_token_and_get_user(session, token)
+    return user
