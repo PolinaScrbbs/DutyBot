@@ -34,3 +34,16 @@ async def get_user_by_username(
     )
 
     return result.scalar_one_or_none()
+
+async def get_user_by_id(
+    session: AsyncSession, id:int
+) -> User:
+    
+    result = await session.execute(
+        select(User).where(User.id==id)
+        .options(
+            selectinload(User.token)
+        )
+    )
+
+    return result.scalar_one_or_none()

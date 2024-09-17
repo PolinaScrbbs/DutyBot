@@ -22,3 +22,12 @@ async def get_user_by_username(username:str, session: AsyncSession = Depends(get
         raise HTTPException(status_code=400, detail="User not found")
     
     return await user.to_pydantic()
+
+@router.get("/{id}", response_model=BaseUser)
+async def get_user_by_id(id:int, session: AsyncSession = Depends(get_session)):
+    user = await qr.get_user_by_id(session, id)
+
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    return await user.to_pydantic()
