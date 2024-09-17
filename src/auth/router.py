@@ -19,8 +19,8 @@ async def create_user(user_create: UserCreate, session: AsyncSession = Depends(g
 
 @router.post("/login/", response_model=TokenResponse)
 async def get_token(user_data: LoginForm, session: AsyncSession = Depends(get_session)):
-    token = await qr.login(session, user_data.login, user_data.password)
+    msg, token = await qr.login(session, user_data.login, user_data.password)
     return TokenResponse(
-        message="A user token has been created",
+        message=msg,
         token=token.token
     )

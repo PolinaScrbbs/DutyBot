@@ -28,9 +28,6 @@ async def get_user_by_username(
     
     result = await session.execute(
         select(User).where(User.username==username)
-        .options(
-            selectinload(User.token)
-        )
     )
 
     return result.scalar_one_or_none()
@@ -41,9 +38,6 @@ async def get_user_by_id(
     
     result = await session.execute(
         select(User).where(User.id==id)
-        .options(
-            selectinload(User.token)
-        )
     )
 
     return result.scalar_one_or_none()

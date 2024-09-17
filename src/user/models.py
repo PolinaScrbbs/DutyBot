@@ -1,4 +1,5 @@
 import bcrypt
+from fastapi import HTTPException, status
 import jwt
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import (
@@ -11,6 +12,7 @@ from sqlalchemy import (
     Enum,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.asyncio import AsyncSession
 from enum import Enum as BaseEnum
 from config import SECRET_KEY
 
@@ -57,7 +59,7 @@ class User(Base):
             password.encode("utf-8"), self.hashed_password.encode("utf-8")
         )
 
-    async def generate_token(self, expires_in: int = 3600) -> str:
+    async def generate_token(self, expires_in: int = 4800) -> str:
         payload = {
             "user_id": self.id,
             "exp": datetime.now(timezone.utc) + timedelta(seconds=expires_in),
@@ -73,15 +75,6 @@ class User(Base):
         )
         if token_to_delete:
             self.tokens.remove(token_to_delete)
-
-    def verify_token(self, token: str) -> int:
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            return payload["user_id"]
-        except jwt.ExpiredSignatureError:
-            raise Exception("Токен истек")
-        except jwt.InvalidTokenError:
-            raise Exception("Неверный токен")
         
     async def to_pydantic(self) -> BaseUser:
         return BaseUser(
@@ -106,3 +99,29 @@ class Token(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="token")
+
+    async def verify_token(self, session: AsyncSession, user: User):
+        try:
+            jwt.decode(self.token, SECRET_KEY, algorithms=["HS256"])
+            return None, self
+        
+        except jwt.ExpiredSignatureError:
+            return await self.refresh_token(session, user)
+
+        except jwt.InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    async def refresh_token(self, session: AsyncSession, user: User):
+        new_token = await user.generate_token()
+
+        self.token = new_token
+        session.add(self)
+        await session.commit()
+
+        return "The user's token has been updated", self
+        
+    
