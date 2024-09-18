@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..user.models import User
+from ..user.queries import get_user_by_id
 
 from .models import Group, Specialization
 from .schemes import BaseGroup, GroupInDB
@@ -31,15 +32,24 @@ async def get_groups_list(
 
     return result.scalars().all()
 
-async def create_group(session: AsyncSession, group_create: BaseGroup) -> BaseGroup:
+async def create_group(
+    session: AsyncSession, 
+    group_create: BaseGroup, 
+    creator_id: int
+) -> BaseGroup:
+    
     group = Group(
         title = group_create.title,
         specialization = Specialization(group_create.specialization),
         course_number = group_create.course_number,
-        creator_id = group_create.creator_id
+        creator_id = creator_id
     )
 
+    user = await get_user_by_id(session, creator_id)
+
     session.add(group)
+    user.group_id = creator_id
+
     await session.commit()
 
     return group

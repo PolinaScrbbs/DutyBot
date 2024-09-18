@@ -4,10 +4,12 @@ from pydantic import BaseModel
 
 from ..user.schemes import BaseUser, Creator
 
-class BaseGroup(BaseModel):
+class GroupForm(BaseModel):
     title: str
     specialization: str
     course_number: int
+
+class BaseGroup(GroupForm):
     creator_id: int
 
 class GroupInDB(BaseGroup):
