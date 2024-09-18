@@ -18,7 +18,7 @@ from enum import Enum as BaseEnum
 from config import SECRET_KEY
 
 from ..group.models import Base
-from .schemes import BaseUser
+from .schemes import BaseUser, Creator
 
 class Role(BaseEnum):
     ADMIN = "Администратор"
@@ -84,6 +84,13 @@ class User(Base):
             full_name=self.full_name,
             group_id=self.group_id,
             created_at=self.created_at
+        )
+    
+    async def to_creator_pydantic(self) -> Creator:
+        return Creator(
+            role=self.role,
+            username=self.username,
+            full_name=self.full_name
         )
 
     # async def duties_count(self, session: AsyncSession) -> int:

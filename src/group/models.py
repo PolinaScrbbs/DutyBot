@@ -15,7 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
 from enum import Enum as BaseEnum
 from sqlalchemy.ext.asyncio import AsyncSession
-from config import SECRET_KEY
+from .schemes import BaseGroup
 
 class Base(DeclarativeBase):
     pass
@@ -75,3 +75,11 @@ class Group(Base):
     # applications = relationship(
     #     "Application", back_populates="group_applications", cascade="all, delete-orphan"
     # )
+
+    async def to_pydantic(self):
+        return BaseGroup(
+           title = self.title,
+           specialization = self.specialization,
+           course_number = self.course_number,
+           creator_id =  self.creator_id
+        )

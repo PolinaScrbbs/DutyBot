@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import User
+from ..group.models import Group
 
 async def get_users_list(
     session: AsyncSession, skip: Optional[int], limit: Optional[int]
@@ -12,8 +13,20 @@ async def get_users_list(
     result = await session.execute(
         select(User)
         .options(
-            selectinload(User.created_group),
-            selectinload(User.group),
+            selectinload(User.created_group)
+                .load_only(
+                    Group.title,
+                    Group.specialization,
+                    Group.course_number,
+                    Group.creator_id
+                ),
+            selectinload(User.group)
+                .load_only(
+                        Group.title,
+                        Group.specialization,
+                        Group.course_number,
+                        Group.creator_id
+                    ),
             selectinload(User.token)
         )
         .offset(skip)
