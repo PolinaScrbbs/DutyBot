@@ -31,7 +31,7 @@ async def get_groups_list(
 
     return result.scalars().all()
 
-async def create_group(session: AsyncSession, group_create: BaseGroup):
+async def create_group(session: AsyncSession, group_create: BaseGroup) -> BaseGroup:
     group = Group(
         title = group_create.title,
         specialization = Specialization(group_create.specialization),
@@ -43,3 +43,26 @@ async def create_group(session: AsyncSession, group_create: BaseGroup):
     await session.commit()
 
     return group
+
+async def get_group_by_id(session: AsyncSession, id: int) -> Group:
+    result = await session.execute(
+        select(Group).where(Group.id==id)
+        .options(
+            selectinload(Group.creator),
+            selectinload(Group.students)
+        )
+    )
+
+    return result.scalar_one_or_none()
+
+
+async def get_group_by_title(session: AsyncSession, title: str) -> Group:
+    result = await session.execute(
+        select(Group).where(Group.title==title)
+        .options(
+            selectinload(Group.creator),
+            selectinload(Group.students)
+        )
+    )
+
+    return result.scalar_one_or_none()
