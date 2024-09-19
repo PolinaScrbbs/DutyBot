@@ -20,10 +20,12 @@ from config import SECRET_KEY
 from ..group.models import Base
 from .schemes import BaseUser, Creator
 
+
 class Role(BaseEnum):
     ADMIN = "Администратор"
     ELDER = "Староста"
     STUDENT = "Студент"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -76,28 +78,25 @@ class User(Base):
         )
         if token_to_delete:
             self.tokens.remove(token_to_delete)
-        
+
     async def to_pydantic(self) -> BaseUser:
         return BaseUser(
             role=self.role,
             username=self.username,
             full_name=self.full_name,
             group_id=self.group_id,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
-    
+
     async def to_creator_pydantic(self) -> Creator:
-        return Creator(
-            role=self.role,
-            username=self.username,
-            full_name=self.full_name
-        )
+        return Creator(role=self.role, username=self.username, full_name=self.full_name)
 
     # async def duties_count(self, session: AsyncSession) -> int:
     #     result = await session.execute(
     #         select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
     #     )
     #     return result.scalar_one()
+
 
 class Token(Base):
     __tablename__ = "tokens"
@@ -112,7 +111,7 @@ class Token(Base):
         try:
             jwt.decode(self.token, SECRET_KEY, algorithms=["HS256"])
             return None, self
-        
+
         except jwt.ExpiredSignatureError:
             return await self.refresh_token(session, user)
 
@@ -126,9 +125,9 @@ class Token(Base):
     async def refresh_token(self, session: AsyncSession, user: Optional[User]):
         if user is None:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Expired token",
-                headers={"WWW-Authenticate": "Bearer"}
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
         new_token = await user.generate_token()
@@ -138,5 +137,3 @@ class Token(Base):
         await session.commit()
 
         return "The user's token has been updated", self
-        
-    

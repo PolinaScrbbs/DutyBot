@@ -15,6 +15,7 @@ from ..applications.models import Base
 
 from .schemes import BaseGroup
 
+
 class Specialization(BaseEnum):
     ECONOMIST = "Экономист"
     INFORMATION_SYSTEMS_SPECIALIST = "Специалист по ИС"
@@ -73,8 +74,8 @@ class Group(Base):
 
     async def to_pydantic(self):
         return BaseGroup(
-           title = self.title,
-           specialization = self.specialization,
-           course_number = self.course_number,
-           creator_id =  self.creator_id
+            title=self.title,
+            specialization=self.specialization,
+            course_number=self.course_number,
+            creator_id=self.creator_id,
         )

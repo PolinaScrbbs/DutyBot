@@ -9,8 +9,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, DeclarativeBase
 from enum import Enum as BaseEnum
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class ApplicationType(BaseEnum):
     GROUP_JOIN = "На вступление в группу"
@@ -21,6 +23,7 @@ class ApplicationStatus(BaseEnum):
     SENT = "Отправлен"
     ADOPTED = "Принят"
     REJECTED = "Отклонен"
+
 
 class Application(Base):
     __tablename__ = "applications"
