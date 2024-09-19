@@ -43,9 +43,9 @@ class User(Base):
     group = relationship(
         "Group", back_populates="students", foreign_keys="[User.group_id]"
     )
-    # sent_application = relationship(
-    #     "Application", back_populates="sending", cascade="all, delete-orphan"
-    # )
+    sent_application = relationship(
+        "Application", back_populates="sending", cascade="all, delete-orphan"
+    )
     # duties = relationship(
     #     "Duty", back_populates="attendant", cascade="all, delete-orphan"
     # )

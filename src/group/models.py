@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta, timezone
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -8,17 +6,14 @@ from sqlalchemy import (
     String,
     func,
     Enum,
-    Table,
     CheckConstraint,
-    select,
 )
-from sqlalchemy.orm import relationship, DeclarativeBase, validates, backref
+from sqlalchemy.orm import relationship, validates
 from enum import Enum as BaseEnum
-from sqlalchemy.ext.asyncio import AsyncSession
-from .schemes import BaseGroup
 
-class Base(DeclarativeBase):
-    pass
+from ..applications.models import Base
+
+from .schemes import BaseGroup
 
 class Specialization(BaseEnum):
     ECONOMIST = "Экономист"
@@ -48,7 +43,7 @@ class Group(Base):
     title = Column(String(32), unique=True, nullable=False)
     specialization = Column(Enum(Specialization), nullable=False)
     course_number = Column(Integer, nullable=False)
-    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    creator_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     created_at = Column(DateTime(True), server_default=func.now())
 
     __table_args__ = (
@@ -72,9 +67,9 @@ class Group(Base):
         foreign_keys="[User.group_id]",
         cascade="all, delete-orphan",
     )
-    # applications = relationship(
-    #     "Application", back_populates="group_applications", cascade="all, delete-orphan"
-    # )
+    applications = relationship(
+        "Application", back_populates="group_applications", cascade="all, delete-orphan"
+    )
 
     async def to_pydantic(self):
         return BaseGroup(
