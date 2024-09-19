@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import exists
 
 from ..user.models import User
+from ..user.queries import get_user_by_id
 from ..group.models import Group
 
 from .models import Application, ApplicationType, ApplicationStatus
@@ -15,6 +16,33 @@ from .schemes import (
     ApplicationWithOutID,
     ApplicationInDB,
 )
+
+
+async def create_application(
+    session: AsyncSession, application_data: ApplicationForm, sending_id: int
+) -> BaseApplication:
+
+    application_type = ApplicationType(application_data.type)
+    group_id = application_data.group_id
+
+    await application_validate(session, application_type, group_id)
+
+    application_exists = await get_application_exists(
+        session, sending_id, application_type, group_id
+    )
+
+    if application_exists:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Your application has already been submitted or closed",
+        )
+
+    application = Application(
+        type=application_type, sending_id=sending_id, group_id=group_id
+    )
+
+    session.add(application)
+    await session.commit()
 
 
 async def application_validate(
@@ -77,7 +105,12 @@ async def get_application_by_id(
         select(Application).where(Application.id == application_id)
     )
 
-    return result.scalar_one_or_none()
+    application = result.scalar_one_or_none()
+
+    if application is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found")
+
+    return
 
 
 async def get_application_exists(
@@ -99,28 +132,10 @@ async def get_application_exists(
     return result.scalar()
 
 
-async def create_application(
-    session: AsyncSession, application_data: ApplicationForm, sending_id: int
-) -> BaseApplication:
-
-    application_type = ApplicationType(application_data.type)
-    group_id = application_data.group_id
-
-    await application_validate(session, application_type, group_id)
-
-    application_exists = await get_application_exists(
-        session, sending_id, application_type, group_id
-    )
-
-    if application_exists:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            "Your application has already been submitted or closed",
-        )
-
-    application = Application(
-        type=application_type, sending_id=sending_id, group_id=group_id
-    )
-
-    session.add(application)
-    await session.commit()
+async def update_application(
+    session: AsyncSession,
+    application_id: int,
+    status: ApplicationStatus,
+):
+    application = await get_application_by_id(session, application_id)
+    user = await get_user_by_id(session, application.sending_id)
