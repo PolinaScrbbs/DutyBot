@@ -12,17 +12,47 @@ from .models import Application, ApplicationType, ApplicationStatus
 from .schemes import ApplicationForm, BaseApplication, ApplicationInDB
 
 
+async def application_validate(
+    session: AsyncSession, application_type: ApplicationType, group_id: Optional[int]
+) -> None:
+
+    if application_type == ApplicationType.BECOME_ELDER:
+        group_id = None
+    else:
+        if group_id == None:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "The group ID cannot be empty"
+            )
+
+    if group_id is not None:
+        group_exists = await session.execute(
+            select(exists().where(Group.id == group_id))
+        )
+        group_exists = group_exists.scalar()
+        print(group_id, group_exists)
+
+        if not group_exists:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+
 async def get_applications_list(
     session: AsyncSession,
     skip: Optional[int],
     limit: Optional[int],
-    type: ApplicationType,
-    status: ApplicationStatus,
+    application_type: ApplicationType,
+    application_status: ApplicationStatus,
+    group_id: Optional[int],
 ) -> List[ApplicationInDB]:
+
+    await application_validate(session, application_type, group_id)
 
     result = await session.execute(
         select(Application)
-        .where(Application.type == type, Application.status == status)
+        .where(
+            Application.type == application_type,
+            Application.status == application_status,
+            Application.group_id == group_id,
+        )
         .options(
             selectinload(Application.sending).load_only(
                 User.id, User.username, User.full_name
@@ -39,7 +69,7 @@ async def get_application_exists(
     session: AsyncSession,
     sending_id: int,
     application_type: ApplicationType = ApplicationType.BECOME_ELDER,
-    group_id: int = None,
+    group_id: Optional[int] = None,
 ) -> bool:
     result = await session.execute(
         select(
@@ -61,23 +91,7 @@ async def create_application(
     application_type = ApplicationType(application_data.type)
     group_id = application_data.group_id
 
-    if application_type == ApplicationType.BECOME_ELDER:
-        group_id = None
-    else:
-        if group_id == None:
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "The group ID cannot be empty"
-            )
-
-    if group_id is not None:
-        group_exists = await session.execute(
-            select(exists().where(Group.id == group_id))
-        )
-        group_exists = group_exists.scalar()
-        print(group_id, group_exists)
-
-        if not group_exists:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+    await application_validate(session, application_type, group_id)
 
     application_exists = await get_application_exists(
         session, sending_id, application_type, group_id

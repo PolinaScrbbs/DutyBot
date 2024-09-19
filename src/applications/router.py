@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,21 +18,20 @@ router = APIRouter(prefix="/applications")
 async def get_applications(
     skip: int = 0,
     limit: int = 10,
-    application_type: ApplicationType = ApplicationType.GROUP_JOIN,
+    application_type: ApplicationType = ApplicationType.BECOME_ELDER,
     application_status: ApplicationStatus = ApplicationStatus.SENT,
+    group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ) -> List[ApplicationInDB]:
 
     await ut.admin_check(user)
     applications = await qr.get_applications_list(
-        session, skip, limit, application_type, application_status
+        session, skip, limit, application_type, application_status, group_id
     )
 
     if applications == []:
-        raise HTTPException(
-            status.HTTP_204_NO_CONTENT, detail="List of applications is empty"
-        )
+        raise HTTPException(status.HTTP_200_OK, detail="List of applications is empty")
 
     return applications
 
