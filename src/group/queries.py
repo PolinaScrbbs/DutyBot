@@ -1,4 +1,5 @@
 from typing import List, Optional
+from fastapi import HTTPException, status
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,7 +58,12 @@ async def get_group_by_id(session: AsyncSession, id: int) -> Group:
         .options(selectinload(Group.creator), selectinload(Group.students))
     )
 
-    return result.scalar_one_or_none()
+    group = result.scalar_one_or_none()
+
+    if group is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    return group
 
 
 async def get_group_by_title(session: AsyncSession, title: str) -> Group:
@@ -67,4 +73,9 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
         .options(selectinload(Group.creator), selectinload(Group.students))
     )
 
-    return result.scalar_one_or_none()
+    group = result.scalar_one_or_none()
+
+    if group is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    return group

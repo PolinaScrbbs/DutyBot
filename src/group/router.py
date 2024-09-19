@@ -67,11 +67,6 @@ async def get_group_by_title(
     await ut.admin_check(user)
     group = await qr.get_group_by_title(session, group_title)
 
-    if group is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
-        )
-
     return await group.to_pydantic()
 
 
@@ -83,10 +78,5 @@ async def get_group_by_id(
 ) -> GroupInDB:
     await ut.admin_check(user)
     group = await qr.get_group_by_id(session, group_id)
-
-    if group is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
-        )
 
     return group

@@ -31,13 +31,9 @@ async def get_user_by_username(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user:
-        user = await qr.get_user_by_username(session, username)
+    user = await qr.get_user_by_username(session, username)
 
-        if user is None:
-            raise HTTPException(status_code=400, detail="User not found")
-
-        return await user.to_creator_pydantic()
+    return await user.to_creator_pydantic()
 
 
 @router.get("/{id}", response_model=BaseUser)
@@ -48,8 +44,5 @@ async def get_user_by_id(
 ):
     await ut.admin_check(current_user)
     user = await qr.get_user_by_id(session, id)
-
-    if user is None:
-        raise HTTPException(status_code=400, detail="User not found")
 
     return await user.to_pydantic()

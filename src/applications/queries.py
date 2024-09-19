@@ -17,6 +17,33 @@ from .schemes import (
 )
 
 
+async def create_application(
+    session: AsyncSession, application_data: ApplicationForm, sending_id: int
+) -> BaseApplication:
+
+    application_type = ApplicationType(application_data.type)
+    group_id = application_data.group_id
+
+    await application_validate(session, application_type, group_id)
+
+    application_exists = await get_application_exists(
+        session, sending_id, application_type, group_id
+    )
+
+    if application_exists:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Your application has already been submitted or closed",
+        )
+
+    application = Application(
+        type=application_type, sending_id=sending_id, group_id=group_id
+    )
+
+    session.add(application)
+    await session.commit()
+
+
 async def application_validate(
     session: AsyncSession, application_type: ApplicationType, group_id: Optional[int]
 ) -> None:
@@ -77,7 +104,12 @@ async def get_application_by_id(
         select(Application).where(Application.id == application_id)
     )
 
-    return result.scalar_one_or_none()
+    application = result.scalar_one_or_none()
+
+    if application is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found")
+
+    return
 
 
 async def get_application_exists(
