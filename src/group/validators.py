@@ -3,13 +3,9 @@ from typing import List
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .queries import get_group_by_title
+from ..auth.validators import ValidateError
 
-class ValidateError(Exception):
-    def __init__(self, detail: str, status_code: int = status.HTTP_400_BAD_REQUEST) -> None:
-        self.detail = detail
-        self.status_code = status_code
-        super().__init__(detail)
+from .queries import get_group_by_title
 
 class GroupValidator:
     def __init__(
