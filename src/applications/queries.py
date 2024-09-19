@@ -5,7 +5,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import exists
 
-from ..user.models import User
+from ..user.models import User, Role
+from ..user.queries import get_user_by_id
 from ..group.models import Group
 
 from .models import Application, ApplicationType, ApplicationStatus
@@ -109,7 +110,7 @@ async def get_application_by_id(
     if application is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found")
 
-    return
+    return application
 
 
 async def get_application_exists(
@@ -131,28 +132,43 @@ async def get_application_exists(
     return result.scalar()
 
 
-async def create_application(
-    session: AsyncSession, application_data: ApplicationForm, sending_id: int
-) -> BaseApplication:
+async def update_application(
+    session: AsyncSession,
+    current_user: User,
+    application_id: int,
+    update_status: ApplicationStatus,
+) -> str:
 
-    application_type = ApplicationType(application_data.type)
-    group_id = application_data.group_id
+    application = await get_application_by_id(session, application_id)
 
-    await application_validate(session, application_type, group_id)
+    if current_user.role == Role.ELDER:
+        if (
+            application.type == ApplicationType.BECOME_ELDER
+            or current_user.group_id != application.group_id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient rights to access this resource",
+            )
 
-    application_exists = await get_application_exists(
-        session, sending_id, application_type, group_id
-    )
-
-    if application_exists:
+    elif application.status != ApplicationStatus.SENT:
         raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            "Your application has already been submitted or closed",
+            status.HTTP_409_CONFLICT, "Cannot update application with this status"
         )
 
-    application = Application(
-        type=application_type, sending_id=sending_id, group_id=group_id
-    )
+    elif update_status == ApplicationStatus.ADOPTED:
+        application.status = ApplicationStatus.ADOPTED
+        sending = await get_user_by_id(session, application.sending_id)
+        if application.type == ApplicationType.GROUP_JOIN:
+            sending.group_id = application.group_id
+            msg = f"Student @{sending.username} has been accepted into the group"
+        else:
+            sending.role = Role.ELDER
+            msg = f'Student @{sending.username} ({sending.full_name}) got the role of "Elder"'
+    else:
+        application.status = ApplicationStatus.REJECTED
+        msg = "The application was rejected"
 
-    session.add(application)
     await session.commit()
+
+    return msg

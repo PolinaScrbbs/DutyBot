@@ -11,7 +11,20 @@ from .models import ApplicationType, ApplicationStatus
 from . import queries as qr
 from .schemes import ApplicationForm, ApplicationWithOutID, ApplicationInDB
 
+
 router = APIRouter(prefix="/applications")
+
+
+@router.post("/", response_class=Response)
+async def post_application(
+    application_data: ApplicationForm,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> Response:
+    await qr.create_application(session, application_data, sending_id=user.id)
+    return Response(
+        status_code=status.HTTP_201_CREATED, content="The application has been sent"
+    )
 
 
 @router.get("/", response_model=List[ApplicationWithOutID])
@@ -56,13 +69,16 @@ async def get_application_by_id(
     return application
 
 
-@router.post("/", response_class=Response)
-async def post_application(
-    application_data: ApplicationForm,
+@router.put("/{application_id}")
+async def update_application(
+    application_id: int,
+    update_status: ApplicationStatus = ApplicationStatus.ADOPTED,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
-) -> Response:
-    await qr.create_application(session, application_data, sending_id=user.id)
-    return Response(
-        status_code=status.HTTP_201_CREATED, content="The application has been sent"
+):
+    await ut.elder_check(user)
+    msg = await qr.update_application(
+        session, user, application_id, ApplicationStatus(update_status)
     )
+
+    return msg
