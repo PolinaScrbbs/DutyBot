@@ -4,17 +4,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..auth.queries import get_current_user
-from ..user.models import User
+from ..user.models import User, Role
 from ..user import utils as ut
 
 from .models import ApplicationType, ApplicationStatus
 from . import queries as qr
-from .schemes import ApplicationInDB, ApplicationForm
+from .schemes import ApplicationForm, ApplicationWithOutID, ApplicationInDB
 
 router = APIRouter(prefix="/applications")
 
 
-@router.get("/", response_model=List[ApplicationInDB])
+@router.get("/", response_model=List[ApplicationWithOutID])
 async def get_applications(
     skip: int = 0,
     limit: int = 10,
@@ -23,7 +23,7 @@ async def get_applications(
     group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
-) -> List[ApplicationInDB]:
+) -> List[ApplicationWithOutID]:
 
     await ut.admin_check(user)
     applications = await qr.get_applications_list(
@@ -34,6 +34,26 @@ async def get_applications(
         raise HTTPException(status.HTTP_200_OK, detail="List of applications is empty")
 
     return applications
+
+
+@router.get("/{application_id}", response_model=ApplicationInDB)
+async def get_application_by_id(
+    application_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> ApplicationInDB:
+
+    await ut.elder_check(user)
+    application = await qr.get_application_by_id(session, application_id)
+
+    if user.role == Role.ELDER:
+        if application.group_id != user.group_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient rights to access this resource",
+            )
+
+    return application
 
 
 @router.post("/", response_class=Response)

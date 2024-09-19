@@ -9,7 +9,12 @@ from ..user.models import User
 from ..group.models import Group
 
 from .models import Application, ApplicationType, ApplicationStatus
-from .schemes import ApplicationForm, BaseApplication, ApplicationInDB
+from .schemes import (
+    ApplicationForm,
+    BaseApplication,
+    ApplicationWithOutID,
+    ApplicationInDB,
+)
 
 
 async def application_validate(
@@ -42,7 +47,7 @@ async def get_applications_list(
     application_type: ApplicationType,
     application_status: ApplicationStatus,
     group_id: Optional[int],
-) -> List[ApplicationInDB]:
+) -> List[ApplicationWithOutID]:
 
     await application_validate(session, application_type, group_id)
 
@@ -63,6 +68,16 @@ async def get_applications_list(
     )
 
     return result.scalars().all()
+
+
+async def get_application_by_id(
+    session: AsyncSession, application_id: int
+) -> ApplicationInDB:
+    result = await session.execute(
+        select(Application).where(Application.id == application_id)
+    )
+
+    return result.scalar_one_or_none()
 
 
 async def get_application_exists(
