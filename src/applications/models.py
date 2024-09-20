@@ -6,12 +6,10 @@ from sqlalchemy import (
     func,
     Enum,
 )
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import relationship
 from enum import Enum as BaseEnum
 
-
-class Base(DeclarativeBase):
-    pass
+from ..duty.models import Base
 
 
 class ApplicationType(BaseEnum):

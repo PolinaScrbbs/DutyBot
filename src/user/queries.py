@@ -42,7 +42,7 @@ async def get_user_by_username(session: AsyncSession, username: str) -> User:
 
 
 async def get_user_by_id(session: AsyncSession, id: int) -> User:
-
+    print(id)
     result = await session.execute(select(User).where(User.id == id))
 
     user = result.scalar_one_or_none()
