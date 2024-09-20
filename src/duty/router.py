@@ -10,10 +10,10 @@ from ..user import utils as ut
 from . import queries as qr
 from .schemes import DutyWithOutId
 
-router = APIRouter(prefix="/duties")
+router = APIRouter()
 
 
-@router.post("/", response_class=Response)
+@router.post("/duties", response_class=Response)
 async def post_duties(
     attendant_ids: List[int] = [1, 2],
     session: AsyncSession = Depends(get_session),
@@ -25,7 +25,7 @@ async def post_duties(
     return Response("The duties are set", status.HTTP_201_CREATED)
 
 
-@router.get("/{group_id}", response_model=List[DutyWithOutId])
+@router.get("/duties/{group_id}", response_model=List[DutyWithOutId])
 async def get_group_duties(
     group_id: int,
     session: AsyncSession = Depends(get_session),

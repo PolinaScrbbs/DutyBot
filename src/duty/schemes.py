@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class Student(BaseModel):
+    id: int
     username: str
     full_name: str
     duties_count: int

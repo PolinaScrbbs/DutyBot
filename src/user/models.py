@@ -12,13 +12,15 @@ from sqlalchemy import (
     func,
     Enum,
 )
+from sqlalchemy import select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 from enum import Enum as BaseEnum
 from config import SECRET_KEY
 
+from ..duty.models import Duty
 from ..group.models import Base
-from .schemes import BaseUser, Creator
+from .schemes import BaseUser
 
 
 class Role(BaseEnum):
@@ -81,6 +83,7 @@ class User(Base):
 
     async def to_pydantic(self) -> BaseUser:
         return BaseUser(
+            id=self.id,
             role=self.role,
             username=self.username,
             full_name=self.full_name,
@@ -88,14 +91,11 @@ class User(Base):
             created_at=self.created_at,
         )
 
-    async def to_creator_pydantic(self) -> Creator:
-        return Creator(role=self.role, username=self.username, full_name=self.full_name)
-
-    # async def duties_count(self, session: AsyncSession) -> int:
-    #     result = await session.execute(
-    #         select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
-    #     )
-    #     return result.scalar_one()
+    async def duties_count(self, session: AsyncSession) -> int:
+        result = await session.execute(
+            select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
+        )
+        return result.scalar_one()
 
     # async def last_duty(self, session: AsyncSession) -> datetime:
     #     result = await session.execute(

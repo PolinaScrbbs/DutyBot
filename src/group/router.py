@@ -1,15 +1,16 @@
-from typing import List
+from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..auth.queries import get_current_user
-from ..user.models import User
+from ..user.models import User, Role
 from ..user import utils as ut
 
 from .models import Specialization
 from .schemes import BaseGroup, GroupInDB, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
+from .utils import validate_group_access
 from .validators import GroupValidator
 
 router = APIRouter()
@@ -70,36 +71,38 @@ async def get_group_by_title(
     return await group.to_pydantic()
 
 
-@router.get("/group/{group_id}", response_model=GroupInDB)
+@router.get("/group", response_model=GroupInDB)
 async def get_group_by_id(
-    group_id: int,
+    group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> GroupInDB:
-    await ut.admin_check(user)
-    group = await qr.get_group_by_id(session, group_id)
 
+    group_id = await validate_group_access(current_user, group_id)
+    group = await qr.get_group_by_id(session, group_id)
     return group
 
 
-@router.get("/group/{group_id}/students", response_model=List[StudentWithDuties])
+@router.get("/group/students", response_model=List[StudentWithDuties])
 async def get_group_students(
-    group_id: int,
+    group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> List[StudentWithDuties]:
 
-    students = await qr.get_group_students(session, user, group_id)
+    group_id = await validate_group_access(current_user, group_id)
+    students = await qr.get_group_students(session, current_user, group_id)
     return students
 
 
-@router.get("/group/{group_id}/student/{student_id}", response_model=StudentWithDuties)
+@router.get("/group/student/{student_id}", response_model=StudentWithDuties)
 async def get_group_student(
-    group_id: int,
     student_id: int,
+    group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> StudentWithDuties:
 
-    student = await qr.get_group_student(session, user, group_id, student_id)
+    group_id = await validate_group_access(current_user, group_id)
+    student = await qr.get_group_student(session, current_user, group_id, student_id)
     return student

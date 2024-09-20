@@ -3,13 +3,11 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class Creator(BaseModel):
+class BaseUser(BaseModel):
+    id: int
     role: str
     username: str
     full_name: str
-
-
-class BaseUser(Creator):
     group_id: Optional[int] = None
     created_at: datetime
 
@@ -39,7 +37,6 @@ class Group(BaseModel):
 
 
 class UserInDB(BaseUser):
-    id: int
     token: Optional[List[TokenInDB]] = None
     created_group: Optional[List[Group]] = None
     group: Optional[Group] = None

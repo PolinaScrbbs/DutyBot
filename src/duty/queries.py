@@ -46,7 +46,7 @@ async def duty_protection(
             )
 
 
-async def get_students_data(
+async def get_users_data(
     session: AsyncSession, current_user: User, group_id: int
 ) -> List[Tuple[User, List[Duty]]]:
     await duty_protection(current_user, group_id)
@@ -63,7 +63,7 @@ async def get_group_duties(
     session: AsyncSession, current_user: User, group_id: int
 ) -> List[DutyWithOutId]:
 
-    attendants_data = await get_students_data(session, current_user, group_id)
+    attendants_data = await get_users_data(session, current_user, group_id)
     duties_with_out_id = []
 
     for user, duties in attendants_data:
@@ -71,6 +71,7 @@ async def get_group_duties(
         last_duty = max((duty.date for duty in duties), default=None)
 
         attendant = Student(
+            id=user.id,
             username=user.username,
             full_name=user.full_name,
             duties_count=duties_count,
@@ -82,4 +83,30 @@ async def get_group_duties(
                 DutyWithOutId(attendant=attendant, date=duty.date)
             )
 
+    if duties_with_out_id == []:
+        raise HTTPException(status.HTTP_204_NO_CONTENT)
+
     return duties_with_out_id
+
+
+async def get_attendants(session: AsyncSession, students: List[User]) -> List[Student]:
+    student_duties = []
+
+    for student in students:
+        duties_count = await student.duties_count(session)
+        student_duties.append((student, duties_count))
+
+    sorted_students = sorted(student_duties, key=lambda x: x[1])
+
+    top_students = sorted_students[:2]
+
+    return [
+        Student(
+            id=student.id,
+            username=student.username,
+            full_name=student.full_name,
+            duties_count=duties_count,
+            last_duty=student.last_duty,
+        )
+        for student, duties_count in top_students
+    ]

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
-from ..user.schemes import BaseUser, Creator
+from ..user.schemes import BaseUser
 from ..duty.schemes import DutyWithOutId
 
 
@@ -14,6 +14,12 @@ class GroupForm(BaseModel):
 
 class BaseGroup(GroupForm):
     creator_id: int
+
+
+class Creator(BaseModel):
+    role: str
+    username: str
+    full_name: str
 
 
 class GroupInDB(BaseGroup):
@@ -31,6 +37,7 @@ class GroupResponse(BaseModel):
 
 
 class Student(BaseModel):
+    id: int
     username: str
     full_name: str
     duties_count: int

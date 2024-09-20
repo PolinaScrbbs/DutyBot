@@ -4,12 +4,13 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..user.models import User
+from ..user.models import User, Role
 from ..user.queries import get_user_by_id
-from ..duty.queries import duty_protection, get_students_data
+from ..duty.queries import get_users_data
 
 from .models import Group, Specialization
 from .schemes import BaseGroup, GroupInDB, Student, StudentWithDuties
+from .utils import check_empty_groups, check_group_exists
 
 
 async def get_groups_list(
@@ -20,7 +21,7 @@ async def get_groups_list(
         select(Group)
         .options(
             selectinload(Group.creator).load_only(
-                User.role, User.username, User.full_name
+                User.id, User.role, User.username, User.full_name
             ),
             selectinload(Group.students),
         )
@@ -28,7 +29,9 @@ async def get_groups_list(
         .limit(limit)
     )
 
-    return result.scalars().all()
+    groups = result.scalars().all()
+    await check_empty_groups(groups)
+    return groups
 
 
 async def create_group(
@@ -48,7 +51,6 @@ async def create_group(
     user.group_id = creator_id
 
     await session.commit()
-
     return group
 
 
@@ -60,10 +62,7 @@ async def get_group_by_id(session: AsyncSession, id: int) -> Group:
     )
 
     group = result.scalar_one_or_none()
-
-    if group is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
-
+    await check_group_exists(group)
     return group
 
 
@@ -75,10 +74,7 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
     )
 
     group = result.scalar_one_or_none()
-
-    if group is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
-
+    await check_group_exists(group)
     return group
 
 
@@ -86,7 +82,7 @@ async def get_group_students(
     session: AsyncSession, current_user: User, group_id: int
 ) -> List[StudentWithDuties]:
 
-    students_data = await get_students_data(session, current_user, group_id)
+    students_data = await get_users_data(session, current_user, group_id)
     students_with_duties = []
 
     for user, duties in students_data:
@@ -94,6 +90,7 @@ async def get_group_students(
         last_duty = max((duty.date for duty in duties), default=None)
 
         student = Student(
+            id=user.id,
             username=user.username,
             full_name=user.full_name,
             duties_count=duties_count,
@@ -116,17 +113,17 @@ async def get_group_student(
     session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:
 
-    await duty_protection(current_user, group_id)
-
-    exists = await session.execute(
-        select(User.id).where(User.id == student_id, User.group_id == group_id)
-    )
-    student_exists = exists.scalar_one_or_none()
-
-    if not student_exists:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail="Student not found in the specified group"
+    if current_user.role == Role.ELDER:
+        exists = await session.execute(
+            select(User.id).where(User.id == student_id, User.group_id == group_id)
         )
+        student_exists = exists.scalar_one_or_none()
+
+        if not student_exists:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail="There are not enough rights to receive information from a student from another group",
+            )
 
     result = await session.execute(
         select(User).where(User.id == student_id).options(selectinload(User.duties))
@@ -139,6 +136,7 @@ async def get_group_student(
     last_duty = max((duty.date for duty in duties), default=None)
 
     student = Student(
+        id=student_data.id,
         username=student_data.username,
         full_name=student_data.full_name,
         duties_count=duties_count,
