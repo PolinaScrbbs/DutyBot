@@ -97,6 +97,16 @@ class User(Base):
     #     )
     #     return result.scalar_one()
 
+    # async def last_duty(self, session: AsyncSession) -> datetime:
+    #     result = await session.execute(
+    #         select(Duty.date)
+    #         .where(Duty.attendant_id == self.id)
+    #         .order_by(Duty.date.desc())
+    #         .limit(1)
+    #     )
+
+    #     return result.scalar_one_or_none()
+
 
 class Token(Base):
     __tablename__ = "tokens"
