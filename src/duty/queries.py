@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,7 @@ from ..user.models import User, Role
 from ..user.queries import get_user_by_id
 
 from .models import Duty
-from .schemes import Student, DutyWithOutId
+from .schemes import BaseStudent, Student, DutyWithOutId
 
 
 async def post_duties(
@@ -89,24 +90,31 @@ async def get_group_duties(
     return duties_with_out_id
 
 
-async def get_attendants(session: AsyncSession, students: List[User]) -> List[Student]:
-    student_duties = []
+async def get_group_attendants(
+    session: AsyncSession, group_id: int, missed_students_id: List[int]
+) -> List[BaseStudent]:
 
-    for student in students:
-        duties_count = await student.duties_count(session)
-        student_duties.append((student, duties_count))
+    result = await session.execute(
+        select(
+            User.id,
+            User.username,
+            User.full_name,
+            func.count(Duty.id).label("duties_count"),
+        )
+        .join(Duty, Duty.attendant_id == User.id)
+        .where(User.group_id == group_id, User.id.notin_(missed_students_id))
+        .group_by(User.id)
+        .order_by(func.count(Duty.id).desc())
+    )
 
-    sorted_students = sorted(student_duties, key=lambda x: x[1])
-
-    top_students = sorted_students[:2]
+    students = result.all()
+    top_students = students[:2]
 
     return [
-        Student(
+        BaseStudent(
             id=student.id,
             username=student.username,
             full_name=student.full_name,
-            duties_count=duties_count,
-            last_duty=student.last_duty,
         )
-        for student, duties_count in top_students
+        for student in top_students
     ]

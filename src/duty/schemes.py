@@ -3,10 +3,13 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class Student(BaseModel):
+class BaseStudent(BaseModel):
     id: int
     username: str
     full_name: str
+
+
+class Student(BaseStudent):
     duties_count: int
     last_duty: Optional[datetime]
 
