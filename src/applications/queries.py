@@ -62,7 +62,6 @@ async def application_validate(
             select(exists().where(Group.id == group_id))
         )
         group_exists = group_exists.scalar()
-        print(group_id, group_exists)
 
         if not group_exists:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")

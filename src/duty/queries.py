@@ -20,7 +20,6 @@ async def post_duties(
 
     for id in attendant_ids:
         if current_user.role == Role.ELDER:
-            print(id)
             student = await get_user_by_id(session, id)
             if current_user.group_id != student.group_id:
                 raise HTTPException(
@@ -38,7 +37,6 @@ async def post_duties(
 async def get_group_attendants(
     session: AsyncSession, current_user: User, group_id: int
 ) -> List[AttendantWithDuties]:
-    print(current_user.role != Role.ADMIN, current_user.group_id != group_id)
     if current_user.role != Role.ADMIN and current_user.group_id != group_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
