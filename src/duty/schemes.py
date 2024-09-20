@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class Attendant(BaseModel):
+class Student(BaseModel):
     username: str
     full_name: str
     duties_count: int
@@ -11,10 +11,5 @@ class Attendant(BaseModel):
 
 
 class DutyWithOutId(BaseModel):
-    attendant: Attendant
+    attendant: Student
     date: datetime
-
-
-class AttendantWithDuties(BaseModel):
-    attendant: Attendant
-    duties: List[DutyWithOutId]

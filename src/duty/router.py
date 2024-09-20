@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..auth.queries import get_current_user
-from ..user.models import User, Role
+from ..user.models import User
 from ..user import utils as ut
 
 from . import queries as qr
-from .schemes import AttendantWithDuties
+from .schemes import DutyWithOutId
 
 router = APIRouter(prefix="/duties")
 
@@ -25,13 +25,12 @@ async def post_duties(
     return Response("The duties are set", status.HTTP_201_CREATED)
 
 
-@router.get("/attendants/{group_id}", response_model=List[AttendantWithDuties])
-async def get_group_attendants(
+@router.get("/{group_id}", response_model=List[DutyWithOutId])
+async def get_group_duties(
     group_id: int,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
-) -> List[AttendantWithDuties]:
+) -> List[DutyWithOutId]:
 
-    attendants = await qr.get_group_attendants(session, user, group_id)
-
-    return attendants
+    duties = await qr.get_group_duties(session, user, group_id)
+    return duties

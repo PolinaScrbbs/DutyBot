@@ -8,14 +8,14 @@ from ..user.models import User
 from ..user import utils as ut
 
 from .models import Specialization
-from .schemes import BaseGroup, GroupInDB, GroupResponse, GroupForm
+from .schemes import BaseGroup, GroupInDB, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .validators import GroupValidator
 
-router = APIRouter(prefix="/groups")
+router = APIRouter()
 
 
-@router.get("/", response_model=List[GroupInDB])
+@router.get("/groups", response_model=List[GroupInDB])
 async def get_groups(
     skip: int = 0,
     limit: int = 10,
@@ -27,7 +27,7 @@ async def get_groups(
     return groups
 
 
-@router.post("/", response_model=GroupResponse)
+@router.post("/groups", response_model=GroupResponse)
 async def post_group(
     group_data: GroupForm,
     session: AsyncSession = Depends(get_session),
@@ -58,7 +58,7 @@ async def post_group(
     )
 
 
-@router.get("/@{group_title}", response_model=BaseGroup)
+@router.get("/group/@{group_title}", response_model=BaseGroup)
 async def get_group_by_title(
     group_title: str,
     session: AsyncSession = Depends(get_session),
@@ -70,7 +70,7 @@ async def get_group_by_title(
     return await group.to_pydantic()
 
 
-@router.get("/{group_id}", response_model=GroupInDB)
+@router.get("/group/{group_id}", response_model=GroupInDB)
 async def get_group_by_id(
     group_id: int,
     session: AsyncSession = Depends(get_session),
@@ -80,3 +80,26 @@ async def get_group_by_id(
     group = await qr.get_group_by_id(session, group_id)
 
     return group
+
+
+@router.get("/group/{group_id}/students", response_model=List[StudentWithDuties])
+async def get_group_students(
+    group_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> List[StudentWithDuties]:
+
+    students = await qr.get_group_students(session, user, group_id)
+    return students
+
+
+@router.get("/group/{group_id}/student/{student_id}", response_model=StudentWithDuties)
+async def get_group_student(
+    group_id: int,
+    student_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> StudentWithDuties:
+
+    student = await qr.get_group_student(session, user, group_id, student_id)
+    return student

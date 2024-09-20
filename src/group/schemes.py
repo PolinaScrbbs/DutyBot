@@ -3,6 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from ..user.schemes import BaseUser, Creator
+from ..duty.schemes import DutyWithOutId
 
 
 class GroupForm(BaseModel):
@@ -27,3 +28,15 @@ class GroupInDB(BaseGroup):
 class GroupResponse(BaseModel):
     message: str
     group: BaseGroup
+
+
+class Student(BaseModel):
+    username: str
+    full_name: str
+    duties_count: int
+    last_duty: Optional[datetime]
+
+
+class StudentWithDuties(BaseModel):
+    student: Student
+    duties: List[DutyWithOutId]
