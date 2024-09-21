@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.sql import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,3 +26,10 @@ async def user_exists_by_username(session: AsyncSession, username: str) -> bool:
     result = await session.execute(select(exists().where(User.username == username)))
 
     return result.scalar()
+
+
+async def user_group_exists(user: User) -> Optional[HTTPException]:
+    if user.group_id is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="You are not a member of the group"
+        )

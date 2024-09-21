@@ -18,33 +18,6 @@ from .schemes import (
 )
 
 
-async def create_application(
-    session: AsyncSession, application_data: ApplicationForm, sending_id: int
-) -> BaseApplication:
-
-    application_type = ApplicationType(application_data.type)
-    group_id = application_data.group_id
-
-    await application_validate(session, application_type, group_id)
-
-    application_exists = await get_application_exists(
-        session, sending_id, application_type, group_id
-    )
-
-    if application_exists:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            "Your application has already been submitted or closed",
-        )
-
-    application = Application(
-        type=application_type, sending_id=sending_id, group_id=group_id
-    )
-
-    session.add(application)
-    await session.commit()
-
-
 async def application_validate(
     session: AsyncSession, application_type: ApplicationType, group_id: Optional[int]
 ) -> None:
@@ -65,6 +38,44 @@ async def application_validate(
 
         if not group_exists:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+
+async def create_application(
+    session: AsyncSession,
+    current_user: User,
+    application_data: ApplicationForm,
+    sending_id: int,
+) -> BaseApplication:
+
+    application_type = ApplicationType(application_data.application_type)
+    group_id = application_data.group_id
+
+    if (
+        application_type == ApplicationType.GROUP_JOIN
+        and current_user.group is not None
+    ):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="You are already a member of the group"
+        )
+
+    await application_validate(session, application_type, group_id)
+
+    application_exists = await get_application_exists(
+        session, sending_id, application_type, group_id
+    )
+
+    if application_exists:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Your application has already been submitted or closed",
+        )
+
+    application = Application(
+        type=application_type, sending_id=sending_id, group_id=group_id
+    )
+
+    session.add(application)
+    await session.commit()
 
 
 async def get_applications_list(

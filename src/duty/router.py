@@ -6,7 +6,6 @@ from ..database import get_session
 from ..auth.queries import get_current_user
 from ..user.models import User
 from ..user import utils as ut
-from ..group.schemes import Creator
 from ..group.utils import validate_group_access
 
 from . import queries as qr
@@ -19,11 +18,12 @@ router = APIRouter()
 async def post_duties(
     attendant_ids: List[int] = [1, 2],
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Response:
 
-    await ut.elder_check(user)
-    await qr.post_duties(session, user, attendant_ids)
+    await ut.elder_check(current_user)
+    await ut.user_group_exists(current_user)
+    await qr.post_duties(session, current_user, attendant_ids)
     return Response("The duties are set", status.HTTP_201_CREATED)
 
 
@@ -34,6 +34,7 @@ async def get_group_duties(
     current_user: User = Depends(get_current_user),
 ) -> List[DutyWithOutId]:
 
+    await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
     duties = await qr.get_group_duties(session, current_user, group_id)
     return duties
@@ -47,6 +48,7 @@ async def get_attendatns(
     current_user: User = Depends(get_current_user),
 ) -> List[BaseStudent]:
 
+    await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
     attendants = await qr.get_group_attendants(session, group_id, missed_students_id)
     return attendants

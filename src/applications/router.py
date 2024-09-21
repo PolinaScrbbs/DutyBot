@@ -19,9 +19,12 @@ router = APIRouter(prefix="/applications")
 async def post_application(
     application_data: ApplicationForm,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Response:
-    await qr.create_application(session, application_data, sending_id=user.id)
+
+    await qr.create_application(
+        session, current_user, application_data, sending_id=current_user.id
+    )
     return Response(
         status_code=status.HTTP_201_CREATED, content="The application has been sent"
     )
@@ -35,10 +38,11 @@ async def get_applications(
     application_status: ApplicationStatus = ApplicationStatus.SENT,
     group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> List[ApplicationWithOutID]:
 
-    await ut.admin_check(user)
+    await ut.elder_check(current_user)
+    await ut.user_group_exists(current_user)
     applications = await qr.get_applications_list(
         session, skip, limit, application_type, application_status, group_id
     )
@@ -53,14 +57,15 @@ async def get_applications(
 async def get_application_by_id(
     application_id: int,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> ApplicationInDB:
 
-    await ut.elder_check(user)
+    await ut.elder_check(current_user)
+    await ut.user_group_exists(current_user)
     application = await qr.get_application_by_id(session, application_id)
 
-    if user.role == Role.ELDER:
-        if application.group_id != user.group_id:
+    if current_user.role == Role.ELDER:
+        if application.group_id != current_user.group_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient rights to access this resource",
@@ -74,11 +79,12 @@ async def update_application(
     application_id: int,
     update_status: ApplicationStatus = ApplicationStatus.ADOPTED,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    await ut.elder_check(user)
+    await ut.elder_check(current_user)
+    await ut.user_group_exists(current_user)
     msg = await qr.update_application(
-        session, user, application_id, ApplicationStatus(update_status)
+        session, current_user, application_id, ApplicationStatus(update_status)
     )
 
     return msg
