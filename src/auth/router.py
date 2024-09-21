@@ -14,7 +14,7 @@ router = APIRouter(prefix="/auth")
 @router.post("/registration/", response_model=UserResponse)
 async def create_user(
     user_create: UserCreate, session: AsyncSession = Depends(get_session)
-):
+):  
     validator = RegistrationValidator(
         user_create.username,
         user_create.password,

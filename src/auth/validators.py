@@ -3,7 +3,7 @@ from typing import List
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..user.queries import get_user_by_username
+from ..user.utils import user_exists_by_username
 
 
 class ValidateError(Exception):
@@ -41,8 +41,8 @@ class RegistrationValidator:
             raise HTTPException(status_code=e.status_code, detail=e.detail)
 
     async def validate_username(self):
-        user = await get_user_by_username(self.session, self.username)
-        if user is not None:
+        exists = await user_exists_by_username(self.session, self.username)
+        if exists:
             raise ValidateError(
                 "A user with this username already exists", status.HTTP_409_CONFLICT
             )
