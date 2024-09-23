@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/auth")
 @router.post("/registration", response_model=UserResponse)
 async def create_user(
     user_create: UserCreate, session: AsyncSession = Depends(get_session)
-):
+):  
     validator = RegistrationValidator(
         user_create.username,
         user_create.password,
@@ -26,8 +26,12 @@ async def create_user(
     await validator.validate()
 
     user = await qr.registration_user(session, user_create)
-    return UserResponse(
-        message="User created successfully", user=await user.to_pydantic()
+    return Response(
+        content=UserResponse(
+            message="User created successfully",
+            user=await user.to_pydantic()
+        ),
+        status_code=status.HTTP_201_CREATED
     )
 
 
