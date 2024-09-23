@@ -29,7 +29,7 @@ async def user_exists_by_username(session: AsyncSession, username: str) -> bool:
 
 
 async def user_group_exists(user: User) -> Optional[HTTPException]:
-    if user.group_id is None:
+    if user.group_id is None and user.role != Role.ADMIN:
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail="You are not a member of the group"
         )

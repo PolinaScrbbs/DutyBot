@@ -25,7 +25,7 @@ async def get_groups(
     current_user: User = Depends(get_current_user),
     without_application: bool = False,
 ) -> List[GroupInDB]:
-    if current_user.role != Role.admin:
+    if current_user.role != Role.ADMIN:
         if without_application:
             groups = await qr.get_group_without_user_application(
                 session, current_user.id
