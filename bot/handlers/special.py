@@ -16,12 +16,15 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    user_id = message.from_user.username
+    user_id = message.from_user.id
     user_data = await ut.get_user_data(state, user_id)
     token = user_data.get("token", None)
 
     if token:
-        pass
+        msg = (
+            f"С возвращением, @{message.from_user.username}👋 \nВыбери пункт из меню🔍"
+        )
+        keyboard = kb.ungroup_main
     else:
         msg = "Привет👋\nВыбери пункт из меню🔍"
         keyboard = kb.start

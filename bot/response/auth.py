@@ -19,9 +19,9 @@ async def registraion(
             return response.status, await response.json()
 
 
-async def authorization(username: str, password: str):
+async def authorization(login: str, password: str):
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.post(
-            f"/auth/login", data={"username": username, "password": password}
+            f"/auth/login", json={"login": login, "password": password}
         ) as response:
-            return await response.json()
+            return response.status, await response.json()

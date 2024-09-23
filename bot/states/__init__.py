@@ -1,1 +1,1 @@
-from .registration import *
+from .auth import *
