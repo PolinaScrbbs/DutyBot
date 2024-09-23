@@ -20,15 +20,10 @@ from .schemes import (
 
 async def application_validate(
     session: AsyncSession, application_type: ApplicationType, group_id: Optional[int]
-) -> None:
+) -> Optional[int]:
 
     if application_type == ApplicationType.BECOME_ELDER:
-        group_id = None
-    else:
-        if group_id == None:
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "The group ID cannot be empty"
-            )
+        return None
 
     if group_id is not None:
         group_exists = await session.execute(
@@ -38,7 +33,33 @@ async def application_validate(
 
         if not group_exists:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+        
+        return group_id
 
+    else:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="The group ID cannot be empty"
+        )
+
+   
+async def get_application_exists(
+    session: AsyncSession,
+    sending_id: int,
+    application_type: ApplicationType = ApplicationType.BECOME_ELDER,
+    group_id: Optional[int] = None,
+) -> bool:
+    result = await session.execute(
+        select(
+            exists().where(
+                Application.sending_id == sending_id,
+                Application.type == application_type,
+                Application.group_id == group_id,
+            )
+        )
+    )
+
+    return result.scalar()
+            
 
 async def create_application(
     session: AsyncSession,
@@ -46,19 +67,19 @@ async def create_application(
     application_data: ApplicationForm,
     sending_id: int,
 ) -> BaseApplication:
-
+    
     application_type = ApplicationType(application_data.application_type)
     group_id = application_data.group_id
 
     if (
         application_type == ApplicationType.GROUP_JOIN
-        and current_user.group is not None
+        and current_user.group_id is not None
     ):
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail="You are already a member of the group"
         )
 
-    await application_validate(session, application_type, group_id)
+    group_id = await application_validate(session, application_type, group_id)
 
     application_exists = await get_application_exists(
         session, sending_id, application_type, group_id
@@ -69,6 +90,7 @@ async def create_application(
             status.HTTP_409_CONFLICT,
             "Your application has already been submitted or closed",
         )
+
 
     application = Application(
         type=application_type, sending_id=sending_id, group_id=group_id
@@ -87,7 +109,7 @@ async def get_applications_list(
     group_id: Optional[int],
 ) -> List[ApplicationWithOutID]:
 
-    await application_validate(session, application_type, group_id)
+    group_id = await application_validate(session, application_type, group_id)
 
     result = await session.execute(
         select(Application)
@@ -121,25 +143,6 @@ async def get_application_by_id(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found")
 
     return application
-
-
-async def get_application_exists(
-    session: AsyncSession,
-    sending_id: int,
-    application_type: ApplicationType = ApplicationType.BECOME_ELDER,
-    group_id: Optional[int] = None,
-) -> bool:
-    result = await session.execute(
-        select(
-            exists().where(
-                Application.sending_id == sending_id,
-                Application.type == application_type,
-                Application.group_id == group_id,
-            )
-        )
-    )
-
-    return result.scalar()
 
 
 async def update_application(
