@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..user.models import User, Role
 from ..user.queries import get_user_by_id
 from ..applications.models import Application, ApplicationType
+from ..duty.models import Duty
 from ..duty.queries import get_users_data
 
 from .models import Group, Specialization
@@ -194,3 +195,32 @@ async def get_group_student(
         duties_list.append(pydantic_duty)
 
     return StudentWithDuties(student=student, duties=duties_list)
+
+
+async def kick_student(session: AsyncSession, current_user: User, user_id: int):
+    user = await get_user_by_id(session, user_id)
+
+    if current_user == user:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="You can't kick yourself"
+        )
+
+    if current_user.group_id != user.group_id:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="This student is not from your group"
+        )
+
+    user.group_id = None
+    await session.flush()
+
+    result = await session.execute(
+        select(Duty).where(Duty.attendant_id == user.id)
+    )
+    user_duties = result.scalars().all()
+
+    for duty in user_duties:
+        await session.delete(duty)
+
+    await session.commit()

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -121,3 +121,18 @@ async def get_group_student(
     group_id = await validate_group_access(current_user, group_id)
     student = await qr.get_group_student(session, current_user, group_id, student_id)
     return student
+
+@router.delete("/group/kick/{student_id}", response_class=Response)
+async def kick_student(
+    student_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+) -> Response:
+    
+    await ut.elder_check(current_user)
+    await qr.kick_student(session, current_user, student_id)
+
+    return Response(
+        content="The student has been removed from the group.\nThe student's duties have been cleared",
+        status_code=status.HTTP_200_OK
+    )
