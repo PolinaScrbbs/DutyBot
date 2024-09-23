@@ -21,11 +21,11 @@ async def post_application(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    
+
     await qr.create_application(
         session, current_user, application_data, sending_id=current_user.id
     )
-    
+
     return Response(
         status_code=status.HTTP_201_CREATED, content="The application has been sent"
     )

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..user.models import User, Role
 from ..user.queries import get_user_by_id
-from ..applications.models import Application, ApplicationType
+from ..applications.models import Application, ApplicationType, ApplicationStatus
 from ..duty.models import Duty
 from ..duty.queries import get_users_data
 
@@ -17,9 +17,7 @@ from .utils import check_empty_groups, check_group_exists
 
 
 async def get_groups_list(
-    session: AsyncSession, 
-    skip: Optional[int], 
-    limit: Optional[int]
+    session: AsyncSession, skip: Optional[int], limit: Optional[int]
 ) -> List[GroupInDB]:
 
     result = await session.execute(
@@ -40,9 +38,7 @@ async def get_groups_list(
 
 
 async def create_group(
-    session: AsyncSession, 
-    group_create: BaseGroup, 
-    creator_id: int
+    session: AsyncSession, group_create: BaseGroup, creator_id: int
 ) -> BaseGroup:
 
     group = Group(
@@ -86,43 +82,37 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
 
 
 async def get_group_without_user_application(
-    session: AsyncSession, 
-    user_id: int
+    session: AsyncSession, user_id: int
 ) -> List[GroupForm]:
-    
+
     result = await session.execute(
-        select(
-            Group.title, 
-            Group.specialization, 
-            Group.course_number
-        )
-        .where(
+        select(Group.title, Group.specialization, Group.course_number).where(
             ~exists(
-                select(Application.id)
-                .where(
+                select(Application.id).where(
                     Application.type == ApplicationType.GROUP_JOIN,
                     Application.sending_id == user_id,
-                    Application.group_id == Group.id
+                    Application.group_id == Group.id,
                 )
             )
         )
     )
-    
+
     groups = result.fetchall()
-    
-    group_forms = [GroupForm(
-        title=group.title, 
-        specialization=group.specialization, 
-        course_number=group.course_number
-    ) for group in groups]
+
+    group_forms = [
+        GroupForm(
+            title=group.title,
+            specialization=group.specialization,
+            course_number=group.course_number,
+        )
+        for group in groups
+    ]
 
     return group_forms
 
 
 async def get_group_students(
-    session: AsyncSession, 
-    current_user: User, 
-    group_id: int
+    session: AsyncSession, current_user: User, group_id: int
 ) -> List[StudentWithDuties]:
 
     students_data = await get_users_data(session, current_user, group_id)
@@ -153,10 +143,7 @@ async def get_group_students(
 
 
 async def get_group_student(
-    session: AsyncSession, 
-    current_user: User, 
-    group_id: int, 
-    student_id: int
+    session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:
 
     if current_user.role == Role.ELDER:
@@ -197,27 +184,65 @@ async def get_group_student(
     return StudentWithDuties(student=student, duties=duties_list)
 
 
-async def kick_student(session: AsyncSession, current_user: User, user_id: int):
+async def application_reply(
+    session: AsyncSession,
+    current_user: User,
+    user_id: int,
+    application_status: ApplicationStatus,
+):
     user = await get_user_by_id(session, user_id)
 
     if current_user == user:
         raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            detail="You can't kick yourself"
+            status.HTTP_409_CONFLICT, detail="You cannot accept yourself"
+        )
+    if current_user.role != Role.ELDER:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail="Only the head of the group can accept a student",
         )
 
     if current_user.group_id != user.group_id:
         raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            detail="This student is not from your group"
+            status.HTTP_409_CONFLICT, detail="This student is not from your group"
+        )
+
+    result = await session.execute(
+        select(Application).where(
+            Application.type == ApplicationType.GROUP_JOIN,
+            Application.sending_id == user.id,
+            Application.group_id == current_user.group_id,
+        )
+    )
+
+    application = result.scalar_one_or_none()
+
+    if application is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="The user's entry application was not found",
+        )
+
+    user.group_id = current_user.group_id
+    application.status = application_status
+    await session.commit()
+
+
+async def kick_student(session: AsyncSession, current_user: User, user_id: int):
+    user = await get_user_by_id(session, user_id)
+
+    if current_user == user:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="You can't kick yourself")
+
+    if current_user.group_id != user.group_id:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="This student is not from your group"
         )
 
     user.group_id = None
     await session.flush()
 
-    result = await session.execute(
-        select(Duty).where(Duty.attendant_id == user.id)
-    )
+    result = await session.execute(select(Duty).where(Duty.attendant_id == user.id))
     user_duties = result.scalars().all()
 
     for duty in user_duties:

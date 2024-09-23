@@ -6,6 +6,7 @@ from ..database import get_session
 from ..auth.queries import get_current_user
 from ..user.models import User, Role
 from ..user import utils as ut
+from ..applications.models import ApplicationStatus
 
 from .models import Specialization
 from .schemes import BaseGroup, GroupInDB, GroupResponse, GroupForm, StudentWithDuties
@@ -22,18 +23,20 @@ async def get_groups(
     limit: int = 10,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-    without_application: bool = False
+    without_application: bool = False,
 ) -> List[GroupInDB]:
     if current_user.role != Role.admin:
         if without_application:
-            groups = await qr.get_group_without_user_application(session, current_user.id)
+            groups = await qr.get_group_without_user_application(
+                session, current_user.id
+            )
         else:
             HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                detail='''
+                detail="""
                     You do not have access to the list of groups with detailed information.\n 
                     Specify the without_application = True parameter to get a list of groups that you did not apply to join.
-                '''
+                """,
             )
     else:
         groups = await qr.get_groups_list(session, skip, limit)
@@ -122,17 +125,31 @@ async def get_group_student(
     student = await qr.get_group_student(session, current_user, group_id, student_id)
     return student
 
+
+@router.put("/group/application/{student_id}", response_class=Response)
+async def application_reply(
+    student_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+    application_status: str = "Принят",
+):
+    await ut.elder_check(current_user)
+    await qr.application_reply(
+        session, current_user, student_id, ApplicationStatus(application_status)
+    )
+
+
 @router.delete("/group/kick/{student_id}", response_class=Response)
 async def kick_student(
     student_id: int,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Response:
-    
+
     await ut.elder_check(current_user)
     await qr.kick_student(session, current_user, student_id)
 
     return Response(
         content="The student has been removed from the group.\nThe student's duties have been cleared",
-        status_code=status.HTTP_200_OK
+        status_code=status.HTTP_200_OK,
     )

@@ -33,7 +33,7 @@ async def application_validate(
 
         if not group_exists:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
-        
+
         return group_id
 
     else:
@@ -41,7 +41,7 @@ async def application_validate(
             status.HTTP_400_BAD_REQUEST, detail="The group ID cannot be empty"
         )
 
-   
+
 async def get_application_exists(
     session: AsyncSession,
     sending_id: int,
@@ -59,7 +59,7 @@ async def get_application_exists(
     )
 
     return result.scalar()
-            
+
 
 async def create_application(
     session: AsyncSession,
@@ -67,7 +67,7 @@ async def create_application(
     application_data: ApplicationForm,
     sending_id: int,
 ) -> BaseApplication:
-    
+
     application_type = ApplicationType(application_data.application_type)
     group_id = application_data.group_id
 
@@ -90,7 +90,6 @@ async def create_application(
             status.HTTP_409_CONFLICT,
             "Your application has already been submitted or closed",
         )
-
 
     application = Application(
         type=application_type, sending_id=sending_id, group_id=group_id
