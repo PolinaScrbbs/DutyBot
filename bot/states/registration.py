@@ -5,12 +5,3 @@ class Registration(StatesGroup):
     full_name = State()
     password = State()
     confirm_password = State()
-
-
-class Auth(StatesGroup):
-    login = State()
-    password = State()
-
-
-class GroupCreate(StatesGroup):
-    title = State()
