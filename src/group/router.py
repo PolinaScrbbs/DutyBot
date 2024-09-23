@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..auth.queries import get_current_user
-from ..user.models import User
+from ..user.models import User, Role
 from ..user import utils as ut
 
 from .models import Specialization
@@ -21,11 +21,23 @@ async def get_groups(
     skip: int = 0,
     limit: int = 10,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    without_application: bool = False
 ) -> List[GroupInDB]:
-    await ut.admin_check(user)
-    groups = await qr.get_groups_list(session, skip, limit)
-    return groups
+    if current_user.role != Role.admin:
+        if without_application:
+            groups = await qr.get_group_without_user_application(session, current_user.id)
+        else:
+            HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail='''
+                    You do not have access to the list of groups with detailed information.\n 
+                    Specify the without_application = True parameter to get a list of groups that you did not apply to join.
+                '''
+            )
+    else:
+        groups = await qr.get_groups_list(session, skip, limit)
+        return groups
 
 
 @router.post("/groups", response_model=GroupResponse)
