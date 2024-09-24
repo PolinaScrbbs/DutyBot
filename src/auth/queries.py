@@ -50,7 +50,7 @@ async def login(session: AsyncSession, login: str, password: str) -> Token:
         await session.commit()
 
     else:
-        msg, token = await token.verify_token(session, user)
+        status_code, msg, token = await token.verify_token(session, user)
 
         if msg is None:
             status_code = status.HTTP_200_OK

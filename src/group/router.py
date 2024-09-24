@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -54,12 +55,12 @@ async def get_groups(
         return groups
 
 
-@router.post("/groups", response_model=GroupResponse)
+@router.post("/groups", response_class=Response)
 async def post_group(
     group_data: GroupForm,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> GroupResponse:
+) -> Response:
     await ut.elder_check(current_user)
 
     if current_user.group_id is not None:
@@ -78,11 +79,15 @@ async def post_group(
     await validator.validate()
 
     group = await qr.create_group(session, group_data, current_user.id)
+    pydantic_group = await group.to_pydantic()
 
-    return GroupResponse(
-        message=f'The group "{group.title}" was created by {current_user.username}',
-        group=await group.to_pydantic(),
-    )
+    return JSONResponse(
+        content = GroupResponse(
+            message=f'The group {group.title} was created',
+            group=pydantic_group,
+        ).dict(),
+        status_code=status.HTTP_201_CREATED
+    ) 
 
 
 @router.get("/group/@{group_title}", response_model=BaseGroup)

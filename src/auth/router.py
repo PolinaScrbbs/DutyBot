@@ -34,7 +34,7 @@ async def create_user(
     )
 
 
-@router.post("/login", response_class=Response)
+@router.post("/login", response_class=JSONResponse)
 async def get_token(
     login_form: LoginForm,
     session: AsyncSession = Depends(get_session),
