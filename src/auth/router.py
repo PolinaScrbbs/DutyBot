@@ -28,8 +28,9 @@ async def create_user(
     user = await qr.registration_user(session, user_create)
     return Response(
         content=UserResponse(
-            message="User created successfully", user=await user.to_pydantic()
-        ),
+            message="User created successfully", 
+            user=await user.to_pydantic()
+        ).dict(),
         status_code=status.HTTP_201_CREATED,
     )
 
