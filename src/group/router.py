@@ -17,6 +17,17 @@ from .validators import GroupValidator
 router = APIRouter()
 
 
+@router.get("/specializations")
+async def get_specializations(
+    current_user: User = Depends(get_current_user),
+):
+    specializations = [
+        {"name": specialization.name, "value": specialization.value}
+        for specialization in Specialization
+    ]
+    return {"specializations": specializations}
+
+
 @router.get("/groups", response_model=List[GroupInDB])
 async def get_groups(
     skip: int = 0,
