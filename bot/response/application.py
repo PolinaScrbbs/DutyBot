@@ -8,7 +8,7 @@ async def post_application(
     token: str,
     type: str = "Стать старостой",
     group_id: Optional[int] = None
-) -> None:
+) -> Tuple[int, dict]:
     
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.post(
@@ -16,4 +16,4 @@ async def post_application(
             headers={"Authorization": f"Bearer {token}"},
             json={"application_type": type, "group_id": group_id}
         ) as response:
-            pass
+            return response.status, await response.json()

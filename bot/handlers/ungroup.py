@@ -139,8 +139,24 @@ async def group_application(callback: CallbackQuery, state: FSMContext):
     )
 
     await callback.message.edit_text(
-        f"Заявка на вступление в *{group_title}* отправлена", "Markdown"
+        f"Заявка на вступление в *{group_title}* отправлена", parse_mode="Markdown"
     )
 
+
+@router.message(lambda message: message.text == "Стать старостой")
+async def elder_application(message: Message, state: FSMContext):
+    user_data = await state.get_data()
+    status, json_response = await response.post_application(
+        user_data["token"]
+    )
+
+    if status == 201:
+        await message.answer(f'Заявка на получение роли "Староста" отправлена')
+
+    else:
+        await message.answer(
+            f"❌ {json_response['detail']}"
+        )
+    
         
 
