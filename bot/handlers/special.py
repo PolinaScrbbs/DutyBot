@@ -7,8 +7,8 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-import keyboards as kb
 import response as response
+import keyboards as kb
 import utils as ut
 
 router = Router()
@@ -16,8 +16,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    user_data = await ut.get_user_data(state, user_id)
+    user_data = await state.get_data()
     token = user_data.get("token", None)
 
     if token:
