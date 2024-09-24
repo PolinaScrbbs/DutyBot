@@ -146,4 +146,4 @@ class Token(Base):
         session.add(self)
         await session.commit()
 
-        return "The user's token has been updated", self
+        return status.HTTP_200_OK, "The user's token has been updated", self
