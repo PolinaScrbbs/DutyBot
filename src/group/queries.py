@@ -12,7 +12,7 @@ from ..duty.models import Duty
 from ..duty.queries import get_users_data
 
 from .models import Group, Specialization
-from .schemes import GroupForm, BaseGroup, GroupInDB, Student, StudentWithDuties
+from .schemes import GroupForm, GroupFormsInfo, BaseGroup, GroupInDB, Student, StudentWithDuties
 from .utils import check_empty_groups, check_group_exists
 
 
@@ -86,7 +86,7 @@ async def get_group_without_user_application(
 ) -> List[GroupForm]:
 
     result = await session.execute(
-        select(Group.title, Group.specialization, Group.course_number).where(
+        select(Group.id, Group.title, Group.specialization, Group.course_number).where(
             ~exists(
                 select(Application.id).where(
                     Application.type == ApplicationType.GROUP_JOIN,
@@ -100,7 +100,8 @@ async def get_group_without_user_application(
     groups = result.fetchall()
 
     group_forms = [
-        GroupForm(
+        GroupFormsInfo(
+            id=group.id,
             title=group.title,
             specialization=group.specialization,
             course_number=group.course_number,

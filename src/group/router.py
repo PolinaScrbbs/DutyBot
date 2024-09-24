@@ -26,21 +26,22 @@ async def get_specializations(
     return specializations
 
 
-@router.get("/groups", response_model=List[GroupInDB])
+@router.get("/groups", response_model=List)
 async def get_groups(
     skip: int = 0,
     limit: int = 10,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
     without_application: bool = False,
-) -> List[GroupInDB]:
+) -> List:
     if current_user.role != Role.ADMIN:
         if without_application:
             groups = await qr.get_group_without_user_application(
                 session, current_user.id
             )
+            return groups
         else:
-            HTTPException(
+            raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
                 detail="""
                     You do not have access to the list of groups with detailed information.\n 
