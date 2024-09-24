@@ -1,3 +1,4 @@
 from .auth import *
-from .group import *
 from .user import *
+from .group import *
+from .application import *

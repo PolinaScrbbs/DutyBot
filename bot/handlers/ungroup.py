@@ -25,8 +25,8 @@ async def group_create(message: Message, state: FSMContext):
         message.from_user.username, token
     )
 
-    # user_data["user_id"] = user["id"]
-    # await state.update_data(user_data)
+    user_data["user_id"] = user["id"]
+    await state.update_data(user_data)
 
     if user["role"] != "Староста":
         await message.answer(
@@ -99,7 +99,7 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
         title, specialization, course_number, token
     )
 
-    await ut.clear_user_data(state, token)
+    await ut.clear_user_data(state, token, user_data["user"])
     if status == 201:
         await callback.message.answer(
             f"Группа {title} создана", reply_markup=kb.elder_main
@@ -108,3 +108,39 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(
             f"❌ *{json_response['detail'].upper()}*", "Markdown"
         )
+
+
+@router.message(lambda message: message.text == "Вступить в группу")
+async def group_join(message: Message, state: FSMContext):
+    user_data = await state.get_data()
+    status, groups = await response.get_groups(
+        without_application = True, token = user_data["token"]
+    )
+
+    if groups:
+        await message.answer(
+            "Выберите группу", parse_mode="Markdown", reply_markup=await kb.inline_groups(groups)
+        )
+    else:
+        await message.answer(
+            "Группы не найдены", parse_mode="Markdown", reply_markup=kb.ungroup_main
+        )
+
+
+@router.callback_query(lambda query: query.data.startswith("group_"))
+async def group_application(callback: CallbackQuery, state: FSMContext):
+    group_fields = callback.data.split("_")
+    group_id = int(group_fields[1])
+    group_title = group_fields[2]
+
+    user_data = await state.get_data()
+    await response.post_application(
+        user_data["token"], "На вступление в группу", group_id
+    )
+
+    await callback.message.edit_text(
+        f"Заявка на вступление в *{group_title}* отправлена", "Markdown"
+    )
+
+        
+

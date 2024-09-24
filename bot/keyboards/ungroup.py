@@ -75,3 +75,32 @@ course_number = InlineKeyboardMarkup(
         ]
     ]
 )
+
+async def inline_groups(groups_list):
+    keyboard = InlineKeyboardBuilder()
+
+    len_range = len(groups_list) if len(groups_list) % 2 == 0 else len(groups_list) - 1
+
+    for j in range(0, len_range, 2):
+        keyboard.row(
+            InlineKeyboardButton(
+                text=f"{groups_list[j]['title']}",
+                callback_data=f"group_{groups_list[j]['id']}_{groups_list[j]['title']}",
+            ),
+            InlineKeyboardButton(
+                text=f"{groups_list[j + 1]['title']}",
+                callback_data=f"group_{groups_list[j + 1]['id']}_{groups_list[j + 1]['title']}",
+            ),
+        )
+
+    if len(groups_list) % 2 != 0:
+        keyboard.row(
+            InlineKeyboardButton(
+                text=f"{groups_list[-1]['title']}",
+                callback_data=f"group_{groups_list[-1]['id']}_{groups_list[-1]['title']}",
+            )
+        )
+
+    keyboard.row(InlineKeyboardButton(text="❌", callback_data="cancel"))
+
+    return keyboard.as_markup()

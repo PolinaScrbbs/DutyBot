@@ -9,7 +9,6 @@ from aiogram.fsm.context import FSMContext
 
 import response as response
 import keyboards as kb
-import utils as ut
 
 router = Router()
 
@@ -27,6 +26,7 @@ async def cmd_start(message: Message, state: FSMContext):
         status, user = await response.get_user_by_username(
             message.from_user.username, token
         )
+        user_data["user"] = user
 
         if user["role"] == "Админ":
             pass
@@ -71,5 +71,5 @@ async def close(callback: CallbackQuery, state: FSMContext):
         "token": token,
         "user": user
     })
-    
+
     await callback.message.edit_text("✅ Закрыто")
