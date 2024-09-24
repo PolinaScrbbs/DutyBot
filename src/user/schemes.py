@@ -8,10 +8,10 @@ class HiddenUser(BaseModel):
     role: str
     username: str
     full_name: str
+    group_id: Optional[int] = None
 
 
 class BaseUser(HiddenUser):
-    group_id: Optional[int] = None
     created_at: datetime
 
 

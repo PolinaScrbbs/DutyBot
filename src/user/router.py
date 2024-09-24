@@ -33,8 +33,12 @@ async def get_user_by_username(
 ):
     user = await qr.get_user_by_username(session, username)
 
-    return await HiddenUser(
-        id=user.id, role=user.role, username=user.username, full_name=user.full_name
+    return HiddenUser(
+        id=user.id,
+        role=user.role,
+        username=user.username,
+        full_name=user.full_name,
+        group_id=user.group_id,
     )
 
 

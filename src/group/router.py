@@ -18,15 +18,12 @@ from .validators import GroupValidator
 router = APIRouter()
 
 
-@router.get("/specializations")
+@router.get("/specializations", response_model=List[str])
 async def get_specializations(
     current_user: User = Depends(get_current_user),
 ):
-    specializations = [
-        {"name": specialization.name, "value": specialization.value}
-        for specialization in Specialization
-    ]
-    return {"specializations": specializations}
+    specializations = [specialization.value for specialization in Specialization]
+    return specializations
 
 
 @router.get("/groups", response_model=List[GroupInDB])
@@ -80,14 +77,15 @@ async def post_group(
 
     group = await qr.create_group(session, group_data, current_user.id)
     pydantic_group = await group.to_pydantic()
+    msg = f"The group {group.title} was created"
 
     return JSONResponse(
-        content = GroupResponse(
-            message=f'The group {group.title} was created',
+        content=GroupResponse(
+            message=msg,
             group=pydantic_group,
         ).dict(),
-        status_code=status.HTTP_201_CREATED
-    ) 
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 @router.get("/group/@{group_title}", response_model=BaseGroup)
