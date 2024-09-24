@@ -3,6 +3,11 @@ from typing import Dict, Any
 from aiogram.fsm.context import FSMContext
 
 
-async def get_user_data(state: FSMContext, user_id: int) -> Dict[str, Any]:
-    data = await state.get_data()
-    return data.get(user_id, {})
+async def get_user_token(user_data: Dict[str, Any]) -> str:
+    token = user_data.get("token", None)
+    return token
+
+
+async def clear_user_data(state: FSMContext, token: str) -> None:
+    await state.clear()
+    await state.update_data({"token": token})

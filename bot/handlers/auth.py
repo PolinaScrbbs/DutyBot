@@ -1,7 +1,7 @@
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from .special import router
+from .special import router, cmd_start
 
 import response as response
 import keyboards as kb
@@ -72,8 +72,9 @@ async def authorazation(message: Message, state: FSMContext):
         await message.answer(
             f"✅ *{json_response['message'].upper()}*",
             "Markdown",
-            reply_markup=kb.ungroup_main,
         )
+
+        await cmd_start(message, state)
     else:
         await message.answer(
             f"❌ *{json_response['detail'].upper()}*", "Markdown", reply_markup=kb.start

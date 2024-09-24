@@ -4,7 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher
 
 from config import BOT_TOKEN
-from handlers.auth import router
+from handlers.ungroup import router
 
 
 async def main():

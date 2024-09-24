@@ -23,7 +23,21 @@ async def cmd_start(message: Message, state: FSMContext):
         msg = (
             f"С возвращением, @{message.from_user.username}👋 \nВыбери пункт из меню🔍"
         )
-        keyboard = kb.ungroup_main
+
+        status, user = await response.get_user_by_username(
+            message.from_user.username, token
+        )
+
+        if user["role"] == "Админ":
+            pass
+        elif user["group_id"] is not None:
+            if user["role"] == "Студент":
+                pass
+            elif user["role"] == "Староста":
+                keyboard = kb.elder_main
+        else:
+            keyboard = kb.ungroup_main
+
     else:
         msg = "Привет👋\nВыбери пункт из меню🔍"
         keyboard = kb.start
