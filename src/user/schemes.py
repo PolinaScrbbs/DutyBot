@@ -3,11 +3,14 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class BaseUser(BaseModel):
+class HiddenUser(BaseModel):
     id: int
     role: str
     username: str
     full_name: str
+
+
+class BaseUser(HiddenUser):
     group_id: Optional[int] = None
     created_at: datetime
 
