@@ -46,12 +46,30 @@ async def cmd_start(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "cancel")
-async def catalog(callback: CallbackQuery, state: FSMContext):
+async def cancel(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+    user = user_data["user"]
+
     await state.clear()
+    await state.update_data({
+        "token": token,
+        "user": user
+    })
+
     await callback.message.edit_text("✅ Отменено")
 
 
 @router.callback_query(F.data == "close")
-async def catalog(callback: CallbackQuery, state: FSMContext):
+async def close(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+    user = user_data["user"]
+
     await state.clear()
+    await state.update_data({
+        "token": token,
+        "user": user
+    })
+    
     await callback.message.edit_text("✅ Закрыто")
