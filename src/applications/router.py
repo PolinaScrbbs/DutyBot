@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -15,19 +16,19 @@ from .schemes import ApplicationForm, ApplicationWithOutID, ApplicationInDB
 router = APIRouter(prefix="/applications")
 
 
-@router.post("/", response_class=Response)
+@router.post("/", response_class=JSONResponse)
 async def post_application(
     application_data: ApplicationForm,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> Response:
+) -> JSONResponse:
 
     await qr.create_application(
         session, current_user, application_data, sending_id=current_user.id
     )
 
-    return Response(
-        status_code=status.HTTP_201_CREATED, content="The application has been sent"
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED, content={"message": "The application has been sent"}
     )
 
 
