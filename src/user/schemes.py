@@ -12,7 +12,7 @@ class HiddenUser(BaseModel):
 
 
 class BaseUser(HiddenUser):
-    created_at: datetime
+    created_at: str
 
 
 class UserCreate(BaseModel):

@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, Response, status
+from fastapi import Depends, APIRouter, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +12,7 @@ from .validators import RegistrationValidator
 router = APIRouter(prefix="/auth")
 
 
-@router.post("/registration", response_class=Response)
+@router.post("/registration", response_class=JSONResponse)
 async def create_user(
     user_create: UserCreate, session: AsyncSession = Depends(get_session)
 ):
@@ -26,7 +26,7 @@ async def create_user(
     await validator.validate()
 
     user = await qr.registration_user(session, user_create)
-    return Response(
+    return JSONResponse(
         content=UserResponse(
             message="User created successfully", user=await user.to_pydantic()
         ).dict(),

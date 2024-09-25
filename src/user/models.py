@@ -88,7 +88,7 @@ class User(Base):
             username=self.username,
             full_name=self.full_name,
             group_id=self.group_id,
-            created_at=self.created_at,
+            created_at=self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     async def duties_count(self, session: AsyncSession) -> int:
