@@ -8,8 +8,6 @@ from .ungroup import router
 
 import response as response
 import keyboards as kb
-import states as st
-import utils as ut
 
 
 @router.message(lambda message: message.text == "Группа")

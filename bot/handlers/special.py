@@ -38,7 +38,7 @@ async def cmd_start(message: Message, state: FSMContext):
 
             if user["role"] == "Студент":
                 pass
-            elif user["role"] == "Староста":
+            else:
                 keyboard = kb.elder_main
         else:
             keyboard = kb.ungroup_main

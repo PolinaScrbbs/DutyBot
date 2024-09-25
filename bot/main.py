@@ -6,7 +6,8 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from config import BOT_TOKEN
-from handlers.group import router, group_menu
+from handlers.application import router
+from handlers.group import group_menu
 
 
 @router.callback_query(F.data == "back")
