@@ -114,12 +114,14 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 async def group_join(message: Message, state: FSMContext):
     user_data = await state.get_data()
     status, groups = await response.get_groups(
-        without_application = True, token = user_data["token"]
+        without_application=True, token=user_data["token"]
     )
 
     if groups:
         await message.answer(
-            "Выберите группу", parse_mode="Markdown", reply_markup=await kb.inline_groups(groups)
+            "Выберите группу",
+            parse_mode="Markdown",
+            reply_markup=await kb.inline_groups(groups),
         )
     else:
         await message.answer(
@@ -146,17 +148,10 @@ async def group_application(callback: CallbackQuery, state: FSMContext):
 @router.message(lambda message: message.text == "Стать старостой")
 async def elder_application(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    status, json_response = await response.post_application(
-        user_data["token"]
-    )
+    status, json_response = await response.post_application(user_data["token"])
 
     if status == 201:
         await message.answer(f'Заявка на получение роли "Староста" отправлена')
 
     else:
-        await message.answer(
-            f"❌ {json_response['detail']}"
-        )
-    
-        
-
+        await message.answer(f"❌ {json_response['detail']}")

@@ -27,10 +27,15 @@ async def cmd_start(message: Message, state: FSMContext):
             message.from_user.username, token
         )
         user_data["user"] = user
+        await state.update_data(user_data)
 
         if user["role"] == "Админ":
             pass
         elif user["group_id"] is not None:
+            group = await response.get_group(token)
+            user_data["group"] = group
+            await state.update_data(user_data)
+
             if user["role"] == "Студент":
                 pass
             elif user["role"] == "Староста":
@@ -50,12 +55,10 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     token = user_data["token"]
     user = user_data["user"]
+    group = user_data["group"]
 
     await state.clear()
-    await state.update_data({
-        "token": token,
-        "user": user
-    })
+    await state.update_data({"token": token, "user": user, "group": group})
 
     await callback.message.edit_text("✅ Отменено")
 
@@ -65,11 +68,9 @@ async def close(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     token = user_data["token"]
     user = user_data["user"]
+    group = user_data["group"]
 
     await state.clear()
-    await state.update_data({
-        "token": token,
-        "user": user
-    })
+    await state.update_data({"token": token, "user": user, "group": group})
 
     await callback.message.edit_text("✅ Закрыто")

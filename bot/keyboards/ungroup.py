@@ -76,6 +76,7 @@ course_number = InlineKeyboardMarkup(
     ]
 )
 
+
 async def inline_groups(groups_list):
     keyboard = InlineKeyboardBuilder()
 
