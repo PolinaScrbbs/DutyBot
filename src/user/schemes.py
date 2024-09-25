@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -12,7 +12,7 @@ class HiddenUser(BaseModel):
 
 
 class BaseUser(HiddenUser):
-    created_at: str
+    created_at: Union[datetime, str]
 
 
 class UserCreate(BaseModel):

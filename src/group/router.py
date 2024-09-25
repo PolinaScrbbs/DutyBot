@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,14 +26,14 @@ async def get_specializations(
     return specializations
 
 
-@router.get("/groups", response_model=List)
+@router.get("/groups", response_model=List[GroupInDB])
 async def get_groups(
     skip: int = 0,
     limit: int = 10,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
     without_application: bool = False,
-) -> List:
+) -> List[GroupInDB]:
     if current_user.role != Role.ADMIN:
         if without_application:
             groups = await qr.get_group_without_user_application(
