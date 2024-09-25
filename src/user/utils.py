@@ -24,8 +24,15 @@ async def elder_check(user: User):
 
 async def user_exists_by_username(session: AsyncSession, username: str) -> bool:
     result = await session.execute(select(exists().where(User.username == username)))
-
     return result.scalar()
+
+
+async def user_exists_by_id(session: AsyncSession, user_id: int) -> bool:
+    result = await session.execute(select(exists().where(User.id == user_id)))
+    user_exists = result.scalar()
+
+    if not user_exists:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="The user was not found")
 
 
 async def user_group_exists(user: User) -> Optional[HTTPException]:

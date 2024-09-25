@@ -12,7 +12,14 @@ from ..duty.models import Duty
 from ..duty.queries import get_users_data
 
 from .models import Group, Specialization
-from .schemes import GroupForm, GroupFormsInfo, BaseGroup, GroupInDB, Student, StudentWithDuties
+from .schemes import (
+    GroupForm,
+    GroupFormsInfo,
+    BaseGroup,
+    GroupInDB,
+    Student,
+    StudentWithDuties,
+)
 from .utils import check_empty_groups, check_group_exists
 
 
@@ -113,7 +120,7 @@ async def get_group_without_user_application(
 
 
 async def get_group_students(
-    session: AsyncSession, current_user: User, group_id: int
+    session: AsyncSession, current_user: User, group_id: Optional[int] = None
 ) -> List[StudentWithDuties]:
 
     students_data = await get_users_data(session, current_user, group_id)
@@ -139,6 +146,9 @@ async def get_group_students(
         students_with_duties.append(
             StudentWithDuties(student=student, duties=student_duties)
         )
+
+    if not students_with_duties:
+        raise HTTPException(status.HTTP_204_NO_CONTENT)
 
     return students_with_duties
 
@@ -250,3 +260,5 @@ async def kick_student(session: AsyncSession, current_user: User, user_id: int):
         await session.delete(duty)
 
     await session.commit()
+
+    return user

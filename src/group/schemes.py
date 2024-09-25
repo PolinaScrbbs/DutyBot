@@ -5,19 +5,22 @@ from pydantic import BaseModel
 from ..user.schemes import BaseUser
 from ..duty.schemes import DutyWithOutId
 
+
 class NullGroup(BaseModel):
     id: int
+
 
 class GroupForm(BaseModel):
     title: str
     specialization: str
     course_number: int
 
+
 class GroupFormsInfo(GroupForm, NullGroup):
     pass
 
 
-class BaseGroup(GroupForm):
+class BaseGroup(GroupFormsInfo):
     creator_id: int
 
 

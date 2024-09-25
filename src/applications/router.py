@@ -28,7 +28,8 @@ async def post_application(
     )
 
     return JSONResponse(
-        status_code=status.HTTP_201_CREATED, content={"message": "The application has been sent"}
+        status_code=status.HTTP_201_CREATED,
+        content={"message": "The application has been sent"},
     )
 
 

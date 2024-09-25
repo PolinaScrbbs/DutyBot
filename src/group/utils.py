@@ -26,7 +26,7 @@ async def check_group_exists(group: Optional[Group]) -> Optional[HTTPException]:
 async def validate_group_access(current_user: User, group_id: Optional[int]) -> int:
     if group_id is None:
         return current_user.group_id
-    elif current_user.role != Role.ADMIN:
+    if current_user.role != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions to access the resource",

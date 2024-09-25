@@ -135,6 +135,7 @@ async def get_group_student(
     current_user: User = Depends(get_current_user),
 ) -> StudentWithDuties:
 
+    await ut.user_exists_by_id(session, student_id)
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
     student = await qr.get_group_student(session, current_user, group_id, student_id)
@@ -162,9 +163,10 @@ async def kick_student(
 ) -> Response:
 
     await ut.elder_check(current_user)
-    await qr.kick_student(session, current_user, student_id)
+    student = await qr.kick_student(session, current_user, student_id)
+    student_first_name, student_last_name = student.full_name.split()[:2]
 
     return Response(
-        content="The student has been removed from the group.\nThe student's duties have been cleared",
+        content=f"The {student.username} ({student_first_name} {student_last_name}) has been removed from the group.\nThe student's duties have been cleared",
         status_code=status.HTTP_200_OK,
     )

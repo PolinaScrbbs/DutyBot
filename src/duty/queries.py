@@ -48,12 +48,14 @@ async def duty_protection(
 
 
 async def get_users_data(
-    session: AsyncSession, current_user: User, group_id: int
+    session: AsyncSession, current_user: User, group_id: Optional[int]
 ) -> List[Tuple[User, List[Duty]]]:
     await duty_protection(current_user, group_id)
 
     result = await session.execute(
-        select(User).where(User.group_id == group_id).options(selectinload(User.duties))
+        select(User)
+        .where(User.group_id == group_id, User.id != current_user.id)
+        .options(selectinload(User.duties))
     )
 
     users = result.scalars().all()
