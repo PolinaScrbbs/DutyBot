@@ -10,13 +10,13 @@ from ..user import utils as ut
 
 from .models import ApplicationType, ApplicationStatus
 from . import queries as qr
-from .schemes import ApplicationForm, ApplicationWithOutID, ApplicationInDB
+from .schemes import ApplicationForm, ApplicationWithSending
 
 
-router = APIRouter(prefix="/applications")
+router = APIRouter()
 
 
-@router.post("/", response_class=JSONResponse)
+@router.post("/applications", response_class=JSONResponse)
 async def post_application(
     application_data: ApplicationForm,
     session: AsyncSession = Depends(get_session),
@@ -33,7 +33,7 @@ async def post_application(
     )
 
 
-@router.get("/", response_model=List[ApplicationWithOutID])
+@router.get("/applications", response_model=List[ApplicationWithSending])
 async def get_applications(
     skip: int = 0,
     limit: int = 10,
@@ -42,26 +42,39 @@ async def get_applications(
     group_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> List[ApplicationWithOutID]:
+) -> List[ApplicationWithSending]:
 
     await ut.elder_check(current_user)
     await ut.user_group_exists(current_user)
+
+    # if current_user.role == Role.ELDER:
+    #     if group_id is None:
+    #         group_id = current_user.group_id
+    #     else:
+    #         raise HTTPException(
+    #             status.HTTP_403_FORBIDDEN,
+    #             detail="You cannot use a request with the user_id parameter"
+    #         )
+
     applications = await qr.get_applications_list(
         session, skip, limit, application_type, application_status, group_id
     )
 
-    if applications == []:
-        raise HTTPException(status.HTTP_200_OK, detail="List of applications is empty")
+    if not applications:
+        raise HTTPException(
+            status.HTTP_204_NO_CONTENT, detail="List of applications is empty"
+        )
 
+    print(applications)
     return applications
 
 
-@router.get("/{application_id}", response_model=ApplicationInDB)
+@router.get("/application/{application_id}", response_model=ApplicationWithSending)
 async def get_application_by_id(
     application_id: int,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> ApplicationInDB:
+) -> ApplicationWithSending:
 
     await ut.elder_check(current_user)
     await ut.user_group_exists(current_user)
@@ -77,7 +90,7 @@ async def get_application_by_id(
     return application
 
 
-@router.put("/{application_id}")
+@router.put("/application/{application_id}")
 async def update_application(
     application_id: int,
     update_status: ApplicationStatus = ApplicationStatus.ADOPTED,
