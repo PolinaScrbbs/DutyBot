@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from config import BOT_TOKEN
-from handlers.application import router
+from handlers.duty import router
 from handlers.group import group_menu
 
 
