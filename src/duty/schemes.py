@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel
 
 
@@ -11,9 +11,9 @@ class BaseStudent(BaseModel):
 
 class Student(BaseStudent):
     duties_count: int
-    last_duty: Optional[datetime]
+    last_duty: Optional[Union[datetime, str]]
 
 
 class DutyWithOutId(BaseModel):
     attendant: Student
-    date: datetime
+    date: Union[datetime, str]

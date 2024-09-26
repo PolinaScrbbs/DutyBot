@@ -77,12 +77,13 @@ async def get_group_duties(
             username=user.username,
             full_name=user.full_name,
             duties_count=duties_count,
-            last_duty=last_duty,
+            last_duty=last_duty.strftime("%H:%M %d-%m-%Y") if last_duty else last_duty,
         )
 
         for duty in duties:
+            formatted_date = await duty.formatted_date
             duties_with_out_id.append(
-                DutyWithOutId(attendant=attendant, date=duty.date)
+                DutyWithOutId(attendant=attendant, date=formatted_date)
             )
 
     if duties_with_out_id == []:

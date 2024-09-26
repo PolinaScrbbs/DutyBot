@@ -20,7 +20,7 @@ async def elder_admin_check(user: User):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient rights to access this resource",
         )
-    
+
 
 async def elder_check(user: User):
     if user.role is not Role.ELDER:
