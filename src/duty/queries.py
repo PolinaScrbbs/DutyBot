@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -104,7 +105,7 @@ async def get_group_duties(
 
 
 async def get_group_attendants(
-    session: AsyncSession, group_id: int, missed_students_id: List[int]
+    session: AsyncSession, elder_id: int, group_id: int, missed_students_id: List[int]
 ) -> List[BaseStudent]:
 
     result = await session.execute(
@@ -113,15 +114,19 @@ async def get_group_attendants(
             User.username,
             User.full_name,
             func.count(Duty.id).label("duties_count"),
+            func.max(Duty.date).label("last_duty_date"),
         )
-        .join(Duty, Duty.attendant_id == User.id)
-        .where(User.group_id == group_id, User.id.notin_(missed_students_id))
+        .outerjoin(Duty, Duty.attendant_id == User.id)
+        .where(User.id != elder_id, User.group_id == group_id)
+        .filter(User.id.notin_(missed_students_id))
         .group_by(User.id)
-        .order_by(func.count(Duty.id).desc())
     )
 
     students = result.all()
-    top_students = students[:2]
+
+    sorted_students = sorted(students, key=lambda x: (x[3], x[4] or datetime.min))
+    bottom_students = sorted_students[:2]
+    print(bottom_students)
 
     return [
         BaseStudent(
@@ -129,5 +134,5 @@ async def get_group_attendants(
             username=student.username,
             full_name=student.full_name,
         )
-        for student in top_students
+        for student in bottom_students
     ]

@@ -44,12 +44,15 @@ async def get_group_duties(
 @router.get("/attendants", response_model=List[BaseStudent])
 async def get_attendatns(
     group_id: Optional[int] = None,
-    missed_students_id: Optional[List[int]] = None,
+    missed_students_id: List[int] = [],
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[BaseStudent]:
 
+    await ut.elder_check(current_user)
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    attendants = await qr.get_group_attendants(session, group_id, missed_students_id)
+    attendants = await qr.get_group_attendants(
+        session, current_user.id, group_id, missed_students_id
+    )
     return attendants
