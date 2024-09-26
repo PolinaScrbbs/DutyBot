@@ -120,7 +120,7 @@ class Token(Base):
     async def verify_token(self, session: AsyncSession, user: Optional[User]):
         try:
             jwt.decode(self.token, SECRET_KEY, algorithms=["HS256"])
-            return None, None, self
+            return status.HTTP_200_OK, "The user's token has been verified", self
 
         except jwt.ExpiredSignatureError:
             return await self.refresh_token(session, user)

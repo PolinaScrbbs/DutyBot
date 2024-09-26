@@ -47,25 +47,36 @@ async def duty_protection(
 
 
 async def get_users_data(
-    session: AsyncSession, current_user: User, group_id: Optional[int]
+    session: AsyncSession,
+    current_user: User,
+    group_id: Optional[int],
+    attendant_id: Optional[int] = None,
 ) -> List[Tuple[User, List[Duty]]]:
     await duty_protection(current_user, group_id)
 
-    result = await session.execute(
-        select(User)
-        .where(User.group_id == group_id, User.id != current_user.id)
-        .options(selectinload(User.duties))
-    )
+    query = select(User).where(User.group_id == group_id, User.id != current_user.id)
+
+    if attendant_id is not None:
+        query = query.where(User.id == attendant_id)
+
+    query = query.options(selectinload(User.duties))
+
+    result = await session.execute(query)
 
     users = result.scalars().all()
     return [(user, user.duties) for user in users]
 
 
 async def get_group_duties(
-    session: AsyncSession, current_user: User, group_id: int
+    session: AsyncSession,
+    current_user: User,
+    group_id: Optional[int] = None,
+    attendant_id: Optional[int] = None,
 ) -> List[DutyWithOutId]:
 
-    attendants_data = await get_users_data(session, current_user, group_id)
+    attendants_data = await get_users_data(
+        session, current_user, group_id, attendant_id
+    )
     duties_with_out_id = []
 
     for user, duties in attendants_data:

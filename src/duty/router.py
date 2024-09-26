@@ -30,13 +30,14 @@ async def post_duties(
 @router.get("/duties", response_model=List[DutyWithOutId])
 async def get_group_duties(
     group_id: Optional[int] = None,
+    attendant_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[DutyWithOutId]:
 
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    duties = await qr.get_group_duties(session, current_user, group_id)
+    duties = await qr.get_group_duties(session, current_user, group_id, attendant_id)
     return duties
 
 

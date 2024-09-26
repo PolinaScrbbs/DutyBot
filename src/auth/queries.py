@@ -52,10 +52,6 @@ async def login(session: AsyncSession, login: str, password: str) -> Token:
     else:
         status_code, msg, token = await token.verify_token(session, user)
 
-        if msg is None:
-            status_code = status.HTTP_200_OK
-            msg = "The user's token has been verified"
-
     return status_code, msg, token.token
 
 
