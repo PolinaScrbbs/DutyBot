@@ -18,16 +18,15 @@ async def post_duties(
 
     duties = []
 
-    for id in attendant_ids:
-        if current_user.role == Role.ELDER:
-            student = await get_user_by_id(session, id)
-            if current_user.group_id != student.group_id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="You can't set shifts for students of another group",
-                )
+    for student_id in attendant_ids:
+        student = await get_user_by_id(session, student_id)
+        if current_user.group_id != student.group_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can't set shifts for students of another group",
+            )
 
-        duty = Duty(attendant_id=id)
+        duty = Duty(attendant_id=student_id)
         duties.append(duty)
 
     session.add_all(duties)

@@ -44,7 +44,7 @@ async def get_applications(
     current_user: User = Depends(get_current_user),
 ) -> List[ApplicationWithSending]:
 
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
     await ut.user_group_exists(current_user)
 
     # if current_user.role == Role.ELDER:
@@ -76,7 +76,7 @@ async def get_application_by_id(
     current_user: User = Depends(get_current_user),
 ) -> ApplicationWithSending:
 
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
     await ut.user_group_exists(current_user)
     application = await qr.get_application_by_id(session, application_id)
 
@@ -97,7 +97,7 @@ async def update_application(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
     await ut.user_group_exists(current_user)
     msg = await qr.update_application(
         session, current_user, application_id, ApplicationStatus(update_status)

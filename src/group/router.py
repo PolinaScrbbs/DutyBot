@@ -59,7 +59,7 @@ async def post_group(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
 
     if current_user.group_id is not None:
         raise HTTPException(
@@ -149,7 +149,7 @@ async def application_reply(
     current_user: User = Depends(get_current_user),
     application_status: str = "Принят",
 ):
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
     await qr.application_reply(
         session, current_user, student_id, ApplicationStatus(application_status)
     )
@@ -162,7 +162,7 @@ async def kick_student(
     current_user: User = Depends(get_current_user),
 ) -> Response:
 
-    await ut.elder_check(current_user)
+    await ut.elder_admin_check(current_user)
     student = await qr.kick_student(session, current_user, student_id)
     student_first_name, student_last_name = student.full_name.split()[:2]
 
