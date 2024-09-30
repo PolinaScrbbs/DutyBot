@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
-from sqlalchemy import exists
+from sqlalchemy import exists, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +9,7 @@ from ..user.models import User, Role
 from ..user.queries import get_user_by_id
 from ..applications.models import Application, ApplicationType, ApplicationStatus
 from ..duty.models import Duty
-from ..duty.queries import get_users_data
+from ..duty.schemes import BaseDuty
 
 from .models import Group, Specialization
 from .schemes import (
@@ -114,39 +114,51 @@ async def get_group_without_user_application(
 
 
 async def get_group_students(
-    session: AsyncSession, current_user: User, group_id: Optional[int] = None
+    session: AsyncSession, current_user_id: int, group_id: Optional[int] = None
 ) -> List[StudentWithDuties]:
 
-    students_data = await get_users_data(session, current_user, group_id)
+    result = await session.execute(
+        select(
+            User,
+            func.count(Duty.id).label("duties_count"),
+            func.max(Duty.date).label("last_duty"),
+        )
+        .where(
+            User.id != current_user_id,
+            User.group_id == group_id
+        )
+        .options(selectinload(User.duties))
+        .group_by(User.id)
+    )
+    
+    rows = result.all()
+    
     students_with_duties = []
+    for row in rows:
+        user = row[0]
+        duties_count = row.duties_count
+        last_duty = row.last_duty
 
-    for user, duties in students_data:
-        duties_count = len(duties)
-        last_duty = max((duty.date for duty in duties), default=None)
+        duties = [
+            BaseDuty(id=duty.id, date=duty.date) for duty in user.duties
+        ] 
 
-        student = Student(
-            id=user.id,
-            username=user.username,
-            full_name=user.full_name,
-            duties_count=duties_count,
-            last_duty=last_duty,
+        student_with_duties = StudentWithDuties(
+            student=Student(
+                id=user.id,
+                username=user.username,
+                full_name=user.full_name,
+                duties_count=duties_count,
+                last_duty=last_duty
+            ),
+            duties=duties
         )
-
-        student_duties = []
-        for duty in duties:
-            pydantic_duty = await duty.duty_to_pydantic(student)
-            student_duties.append(pydantic_duty)
-
-        students_with_duties.append(
-            StudentWithDuties(student=student, duties=student_duties)
-        )
-
-    if not students_with_duties:
-        raise HTTPException(status.HTTP_204_NO_CONTENT)
-
+        
+        students_with_duties.append(student_with_duties)
+    
     return students_with_duties
-
-
+    
+    
 async def get_group_student(
     session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:

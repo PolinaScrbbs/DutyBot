@@ -123,7 +123,7 @@ async def get_group_students(
 
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    students = await qr.get_group_students(session, current_user, group_id)
+    students = await qr.get_group_students(session, current_user.id, group_id)
     return students
 
 
