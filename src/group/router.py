@@ -26,7 +26,7 @@ async def get_specializations(
     return specializations
 
 
-@router.get("/groups", response_model=List[GroupInDB])
+@router.get("/groups")
 async def get_groups(
     skip: int = 0,
     limit: int = 10,
@@ -89,7 +89,7 @@ async def post_group(
     )
 
 
-@router.get("/group/@{group_title}", response_model=BaseGroup)
+@router.get("/group/@{group_title}", response_model=GroupInDB)
 async def get_group_by_title(
     group_title: str,
     session: AsyncSession = Depends(get_session),
@@ -98,7 +98,7 @@ async def get_group_by_title(
     await ut.admin_check(user)
     group = await qr.get_group_by_title(session, group_title)
 
-    return await group.to_pydantic()
+    return group
 
 
 @router.get("/group", response_model=GroupInDB)

@@ -25,12 +25,13 @@ class BaseGroup(GroupFormsInfo):
 
 
 class Creator(BaseModel):
+    id: int
     role: str
     username: str
     full_name: str
 
 
-class GroupInDB(BaseGroup):
+class GroupInDB(GroupFormsInfo):
     created_at: datetime
     creator: Creator
     students: Optional[List[BaseUser]]

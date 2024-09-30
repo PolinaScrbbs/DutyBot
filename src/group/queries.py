@@ -90,10 +90,15 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
 
 async def get_group_without_user_application(
     session: AsyncSession, user_id: int
-) -> List[GroupForm]:
+) -> List[GroupInDB]:
 
     result = await session.execute(
-        select(Group.id, Group.title, Group.specialization, Group.course_number).where(
+        select(Group)
+        .options(
+            selectinload(Group.creator),
+            selectinload(Group.students)
+        )
+        .where(
             ~exists(
                 select(Application.id).where(
                     Application.type == ApplicationType.GROUP_JOIN,
@@ -101,22 +106,11 @@ async def get_group_without_user_application(
                     Application.group_id == Group.id,
                 )
             )
-        )
+        )  
     )
 
-    groups = result.fetchall()
-
-    group_forms = [
-        GroupFormsInfo(
-            id=group.id,
-            title=group.title,
-            specialization=group.specialization,
-            course_number=group.course_number,
-        )
-        for group in groups
-    ]
-
-    return group_forms
+    groups = result.scalars().all()
+    return groups
 
 
 async def get_group_students(
