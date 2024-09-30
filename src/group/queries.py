@@ -193,12 +193,11 @@ async def get_group_student(
         last_duty=last_duty,
     )
 
-    duties_list = []
-    for duty in duties:
-        pydantic_duty = await duty.duty_to_pydantic(student)
-        duties_list.append(pydantic_duty)
+    duties = [
+            BaseDuty(id=duty.id, date=duty.date) for duty in student_data.duties
+        ] 
 
-    return StudentWithDuties(student=student, duties=duties_list)
+    return StudentWithDuties(student=student, duties=duties)
 
 
 async def application_reply(
