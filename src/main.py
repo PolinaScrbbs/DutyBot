@@ -7,7 +7,7 @@ from .applications.router import router as applicationsRouter
 from .duty.router import router as dutiesRouter
 
 app = FastAPI(
-    title="Duty Bot Api", description="API for Telegram Bot DutyBot", version="0.0.7"
+    title="Duty Bot Api", description="API for Telegram Bot DutyBot", version="1.0.0"
 )
 
 app.include_router(authRouter, tags=["Auth"])

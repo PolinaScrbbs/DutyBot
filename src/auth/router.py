@@ -36,12 +36,12 @@ async def create_user(
 
 @router.post("/login", response_class=JSONResponse)
 async def get_token(
-    login_form: LoginForm,
+    login_form: LoginForm = Depends(LoginForm.as_form),
     session: AsyncSession = Depends(get_session),
 ):
     code, message, token = await qr.login(
-        session, login_form.login, login_form.password
+        session, login_form.username, login_form.password
     )
     return JSONResponse(
-        content=TokenResponse(message=message, token=token).dict(), status_code=code
+        content=TokenResponse(message=message, access_token=token).dict(), status_code=code
     )

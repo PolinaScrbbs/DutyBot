@@ -72,10 +72,10 @@ async def verify_token_and_get_user(session: AsyncSession, token: str) -> User:
 
     return user
 
-
 async def get_current_user(
     session: AsyncSession = Depends(get_session),
-    token: str = Depends(OAuth2PasswordBearer(tokenUrl="auth/login")),
+    token: str = Depends(OAuth2PasswordBearer(tokenUrl="/auth/login")),
 ) -> User:
+    print(token)
     user = await verify_token_and_get_user(session, token)
     return user
