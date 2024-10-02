@@ -1,5 +1,3 @@
-from shutil import ExecError
-from uu import Error
 from aiogram import F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext

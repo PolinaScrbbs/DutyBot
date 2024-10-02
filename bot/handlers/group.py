@@ -1,5 +1,4 @@
 import asyncio
-from pstats import StatsProfile
 
 from aiogram import F
 from aiogram.types import Message, CallbackQuery

@@ -1,11 +1,9 @@
 from aiogram import F
-from aiogram.types import CallbackQuery
+from aiogram import Router
+from aiogram.types import CallbackQuery, Message
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
-from aiogram import Router
-from aiogram.filters import CommandStart
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
 
 import response as response
 import keyboards as kb

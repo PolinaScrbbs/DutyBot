@@ -1,7 +1,7 @@
 import asyncio
 
 from aiogram import F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from .group import router
