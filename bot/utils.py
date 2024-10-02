@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from aiogram.fsm.context import FSMContext
 
@@ -8,10 +8,15 @@ async def get_user_token(user_data: Dict[str, Any]) -> str:
     return token
 
 
-async def clear_user_data(state: FSMContext, token: str, user: Dict[str, Any]) -> None:
+async def clear_user_data(
+    state: FSMContext,
+    token: str,
+    user: Dict[str, Any],
+    group: Optional[Dict[str, Any]] = None,
+) -> None:
 
     await state.clear()
-    await state.update_data({"token": token, "user": user})
+    await state.update_data({"token": token, "user": user, "group": group})
 
 
 async def create_duties_msg(initial_line: str, duties: List[dict]) -> str:

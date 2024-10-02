@@ -1,4 +1,5 @@
 import asyncio
+from pstats import StatsProfile
 
 from aiogram import F
 from aiogram.types import Message, CallbackQuery
@@ -29,7 +30,10 @@ async def group_menu(message: Message, state: FSMContext):
         token=token, application_type="На вступление в группу", group_id=group["id"]
     )
 
-    applications_count = len(applications)
+    applications_count = 0
+    if status == 200:
+        applications_count = len(applications)
+
     await message.answer(
         f"*{group['title'].upper()}*",
         parse_mode="Markdown",
