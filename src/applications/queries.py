@@ -10,12 +10,7 @@ from ..user.queries import get_user_by_id
 from ..group.models import Group
 
 from .models import Application, ApplicationType, ApplicationStatus
-from .schemes import (
-    ApplicationForm,
-    BaseApplication,
-    ApplicationWithOutID,
-    ApplicationInDB,
-)
+from .schemes import ApplicationForm, ApplicationWithSending
 
 
 async def application_validate(
@@ -25,21 +20,22 @@ async def application_validate(
     if application_type == ApplicationType.BECOME_ELDER:
         return None
 
-    if group_id is not None:
-        group_exists = await session.execute(
-            select(exists().where(Group.id == group_id))
-        )
-        group_exists = group_exists.scalar()
-
-        if not group_exists:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
-
-        return group_id
-
     else:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, detail="The group ID cannot be empty"
-        )
+        if group_id is not None:
+            group_exists = await session.execute(
+                select(exists().where(Group.id == group_id))
+            )
+            group_exists = group_exists.scalar()
+
+            if not group_exists:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+            return group_id
+
+        else:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, detail="The group ID cannot be empty"
+            )
 
 
 async def get_application_exists(
@@ -66,7 +62,7 @@ async def create_application(
     current_user: User,
     application_data: ApplicationForm,
     sending_id: int,
-) -> BaseApplication:
+) -> None:
 
     application_type = ApplicationType(application_data.application_type)
     group_id = application_data.group_id
@@ -106,7 +102,7 @@ async def get_applications_list(
     application_type: ApplicationType,
     application_status: ApplicationStatus,
     group_id: Optional[int],
-) -> List[ApplicationWithOutID]:
+) -> List[ApplicationWithSending]:
 
     group_id = await application_validate(session, application_type, group_id)
 
@@ -131,9 +127,15 @@ async def get_applications_list(
 
 async def get_application_by_id(
     session: AsyncSession, application_id: int
-) -> ApplicationInDB:
+) -> ApplicationWithSending:
     result = await session.execute(
-        select(Application).where(Application.id == application_id)
+        select(Application)
+        .where(Application.id == application_id)
+        .options(
+            selectinload(Application.sending).load_only(
+                User.id, User.username, User.full_name
+            )
+        )
     )
 
     application = result.scalar_one_or_none()

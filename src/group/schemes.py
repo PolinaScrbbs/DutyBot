@@ -2,8 +2,13 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
+from ..duty.schemes import BaseDuty, Student
+
 from ..user.schemes import BaseUser
-from ..duty.schemes import DutyWithOutId
+
+
+class NullGroup(BaseModel):
+    id: int
 
 
 class GroupForm(BaseModel):
@@ -12,17 +17,22 @@ class GroupForm(BaseModel):
     course_number: int
 
 
-class BaseGroup(GroupForm):
+class GroupFormsInfo(GroupForm, NullGroup):
+    pass
+
+
+class BaseGroup(GroupFormsInfo):
     creator_id: int
 
 
 class Creator(BaseModel):
+    id: int
     role: str
     username: str
     full_name: str
 
 
-class GroupInDB(BaseGroup):
+class GroupInDB(GroupFormsInfo):
     created_at: datetime
     creator: Creator
     students: Optional[List[BaseUser]]
@@ -35,15 +45,6 @@ class GroupResponse(BaseModel):
     message: str
     group: BaseGroup
 
-
-class Student(BaseModel):
-    id: int
-    username: str
-    full_name: str
-    duties_count: int
-    last_duty: Optional[datetime]
-
-
 class StudentWithDuties(BaseModel):
     student: Student
-    duties: List[DutyWithOutId]
+    duties: List[BaseDuty]

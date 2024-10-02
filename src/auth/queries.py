@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,18 +43,16 @@ async def login(session: AsyncSession, login: str, password: str) -> Token:
     if token is None:
         token = await user.generate_token()
         token = Token(user_id=user.id, token=token)
+        status_code = status.HTTP_201_CREATED
         msg = "A user token has been created"
 
         session.add(token)
         await session.commit()
 
     else:
-        msg, token = await token.verify_token(session, user)
+        status_code, msg, token = await token.verify_token(session, user)
 
-        if msg is None:
-            msg = "The user's token has been verified"
-
-    return msg, token
+    return status_code, msg, token.token
 
 
 async def get_token(session: AsyncSession, token: str) -> Token:
@@ -74,10 +72,10 @@ async def verify_token_and_get_user(session: AsyncSession, token: str) -> User:
 
     return user
 
-
 async def get_current_user(
     session: AsyncSession = Depends(get_session),
-    token: str = Depends(OAuth2PasswordBearer(tokenUrl="auth/login")),
+    token: str = Depends(OAuth2PasswordBearer(tokenUrl="/auth/login")),
 ) -> User:
+    print(token)
     user = await verify_token_and_get_user(session, token)
     return user

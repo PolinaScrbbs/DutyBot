@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
-from sqlalchemy import exists
+from sqlalchemy import exists, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,10 +9,15 @@ from ..user.models import User, Role
 from ..user.queries import get_user_by_id
 from ..applications.models import Application, ApplicationType, ApplicationStatus
 from ..duty.models import Duty
-from ..duty.queries import get_users_data
+from ..duty.schemes import BaseDuty
 
 from .models import Group, Specialization
-from .schemes import GroupForm, BaseGroup, GroupInDB, Student, StudentWithDuties
+from .schemes import (
+    BaseGroup,
+    GroupInDB,
+    Student,
+    StudentWithDuties,
+)
 from .utils import check_empty_groups, check_group_exists
 
 
@@ -83,10 +88,15 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
 
 async def get_group_without_user_application(
     session: AsyncSession, user_id: int
-) -> List[GroupForm]:
+) -> List[GroupInDB]:
 
     result = await session.execute(
-        select(Group.title, Group.specialization, Group.course_number).where(
+        select(Group)
+        .options(
+            selectinload(Group.creator),
+            selectinload(Group.students)
+        )
+        .where(
             ~exists(
                 select(Application.id).where(
                     Application.type == ApplicationType.GROUP_JOIN,
@@ -94,54 +104,59 @@ async def get_group_without_user_application(
                     Application.group_id == Group.id,
                 )
             )
-        )
+        )  
     )
 
-    groups = result.fetchall()
-
-    group_forms = [
-        GroupForm(
-            title=group.title,
-            specialization=group.specialization,
-            course_number=group.course_number,
-        )
-        for group in groups
-    ]
-
-    return group_forms
+    groups = result.scalars().all()
+    return groups
 
 
 async def get_group_students(
-    session: AsyncSession, current_user: User, group_id: int
+    session: AsyncSession, current_user_id: int, group_id: Optional[int] = None
 ) -> List[StudentWithDuties]:
 
-    students_data = await get_users_data(session, current_user, group_id)
+    result = await session.execute(
+        select(
+            User,
+            func.count(Duty.id).label("duties_count"),
+            func.max(Duty.date).label("last_duty"),
+        )
+        .where(
+            User.id != current_user_id,
+            User.group_id == group_id
+        )
+        .options(selectinload(User.duties))
+        .group_by(User.id)
+    )
+    
+    rows = result.all()
+    
     students_with_duties = []
+    for row in rows:
+        user = row[0]
+        duties_count = row.duties_count
+        last_duty = row.last_duty
 
-    for user, duties in students_data:
-        duties_count = len(duties)
-        last_duty = max((duty.date for duty in duties), default=None)
+        duties = [
+            BaseDuty(id=duty.id, date=duty.date) for duty in user.duties
+        ] 
 
-        student = Student(
-            id=user.id,
-            username=user.username,
-            full_name=user.full_name,
-            duties_count=duties_count,
-            last_duty=last_duty,
+        student_with_duties = StudentWithDuties(
+            student=Student(
+                id=user.id,
+                username=user.username,
+                full_name=user.full_name,
+                duties_count=duties_count,
+                last_duty=last_duty
+            ),
+            duties=duties
         )
-
-        student_duties = []
-        for duty in duties:
-            pydantic_duty = await duty.duty_to_pydantic(student)
-            student_duties.append(pydantic_duty)
-
-        students_with_duties.append(
-            StudentWithDuties(student=student, duties=student_duties)
-        )
-
+        
+        students_with_duties.append(student_with_duties)
+    
     return students_with_duties
-
-
+    
+    
 async def get_group_student(
     session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:
@@ -176,12 +191,11 @@ async def get_group_student(
         last_duty=last_duty,
     )
 
-    duties_list = []
-    for duty in duties:
-        pydantic_duty = await duty.duty_to_pydantic(student)
-        duties_list.append(pydantic_duty)
+    duties = [
+            BaseDuty(id=duty.id, date=duty.date) for duty in student_data.duties
+        ] 
 
-    return StudentWithDuties(student=student, duties=duties_list)
+    return StudentWithDuties(student=student, duties=duties)
 
 
 async def application_reply(
@@ -249,3 +263,5 @@ async def kick_student(session: AsyncSession, current_user: User, user_id: int):
         await session.delete(duty)
 
     await session.commit()
+
+    return user

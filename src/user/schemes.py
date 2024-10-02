@@ -1,15 +1,18 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
 
 
-class BaseUser(BaseModel):
+class HiddenUser(BaseModel):
     id: int
     role: str
     username: str
     full_name: str
     group_id: Optional[int] = None
-    created_at: datetime
+
+
+class BaseUser(HiddenUser):
+    created_at: Union[datetime, str]
 
 
 class UserCreate(BaseModel):

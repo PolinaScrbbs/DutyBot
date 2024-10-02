@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.validators import ValidateError
 
-from .queries import get_group_by_title
+from .utils import group_exists
 
 
 class GroupValidator:
@@ -34,11 +34,7 @@ class GroupValidator:
             raise HTTPException(status_code=e.status_code, detail=e.detail)
 
     async def validate_title(self):
-        group = await get_group_by_title(self.session, self.title)
-        if group is not None:
-            raise ValidateError(
-                "A group with this title already exists", status.HTTP_409_CONFLICT
-            )
+        await group_exists(self.session, self.title)
         if not self.title or self.title == "":
             raise ValidateError(
                 "Title cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY

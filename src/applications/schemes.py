@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Optional, Union
 from pydantic import BaseModel
 
 from .models import ApplicationType, ApplicationStatus
@@ -12,29 +12,14 @@ class Sending(BaseModel):
 
 
 class ApplicationForm(BaseModel):
-    application_type: ApplicationType = ApplicationType.BECOME_ELDER
-    group_id: Optional[int] = None
-
-
-class BaseApplication(ApplicationForm):
-    status: ApplicationStatus = ApplicationStatus.SENT
-
-
-class ApplicationWithOutID(BaseApplication):
-    last_update_at: datetime
-
-
-class ApplicationInDB(BaseModel):
-    id: int
     type: ApplicationType = ApplicationType.BECOME_ELDER
-    status: ApplicationStatus = ApplicationStatus.SENT
     group_id: Optional[int] = None
-    last_update_at: datetime
 
 
-class ApplicationWithSending(ApplicationForm):
+class ApplicationWithSending(BaseModel):
     id: int
-    type: str
-    status: str
+    type: ApplicationType
+    status: ApplicationStatus
+    group_id: Optional[int]
     sending: Sending
-    group_id: int
+    last_update_at: Union[datetime, str]

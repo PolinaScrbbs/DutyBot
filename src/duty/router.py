@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Depends, APIRouter, HTTPException, status, Response
+from fastapi import Depends, APIRouter, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -30,25 +30,29 @@ async def post_duties(
 @router.get("/duties", response_model=List[DutyWithOutId])
 async def get_group_duties(
     group_id: Optional[int] = None,
+    attendant_id: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[DutyWithOutId]:
 
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    duties = await qr.get_group_duties(session, current_user, group_id)
+    duties = await qr.get_group_duties(session, current_user, group_id, attendant_id)
     return duties
 
 
 @router.get("/attendants", response_model=List[BaseStudent])
 async def get_attendatns(
     group_id: Optional[int] = None,
-    missed_students_id: Optional[List[int]] = None,
+    missed_students_id: List[int] = [],
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[BaseStudent]:
 
+    await ut.elder_check(current_user)
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    attendants = await qr.get_group_attendants(session, group_id, missed_students_id)
+    attendants = await qr.get_group_attendants(
+        session, current_user.id, group_id, missed_students_id
+    )
     return attendants

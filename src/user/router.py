@@ -1,19 +1,19 @@
 from typing import List
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import User
-from .schemes import BaseUser, UserInDB
+from .schemes import HiddenUser, BaseUser, UserInDB
 from . import utils as ut
 from ..database import get_session
 from ..auth.queries import get_current_user
 
 from . import queries as qr
 
-router = APIRouter(prefix="/users")
+router = APIRouter()
 
 
-@router.get("/", response_model=List[UserInDB])
+@router.get("/users", response_model=List[UserInDB])
 async def get_users(
     skip: int = 0,
     limit: int = 10,
@@ -25,18 +25,24 @@ async def get_users(
     return users
 
 
-# @router.get("/@{username}", response_model=Creator)
-# async def get_user_by_username(
-#     username: str,
-#     session: AsyncSession = Depends(get_session),
-#     current_user: User = Depends(get_current_user),
-# ):
-#     user = await qr.get_user_by_username(session, username)
+@router.get("/user/@{username}", response_model=HiddenUser)
+async def get_user_by_username(
+    username: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    user = await qr.get_user_by_username(session, username)
 
-#     return await user.to_creator_pydantic()
+    return HiddenUser(
+        id=user.id,
+        role=user.role,
+        username=user.username,
+        full_name=user.full_name,
+        group_id=user.group_id,
+    )
 
 
-@router.get("/{id}", response_model=BaseUser)
+@router.get("/user/{id}", response_model=BaseUser)
 async def get_user_by_id(
     id: int,
     session: AsyncSession = Depends(get_session),

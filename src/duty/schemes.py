@@ -1,7 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional, Union
 from pydantic import BaseModel
 
+
+class BaseDuty(BaseModel):
+    id: int
+    date: Union[datetime, str]
 
 class BaseStudent(BaseModel):
     id: int
@@ -10,10 +14,10 @@ class BaseStudent(BaseModel):
 
 
 class Student(BaseStudent):
-    duties_count: int
-    last_duty: Optional[datetime]
+    duties_count: Optional[int] = None
+    last_duty: Optional[Union[datetime, str]] = None
 
 
 class DutyWithOutId(BaseModel):
     attendant: Student
-    date: datetime
+    date: Union[datetime, str]

@@ -1,18 +1,18 @@
-from fastapi import Depends, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends, APIRouter, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..user.schemes import UserCreate, UserResponse
 from ..database import get_session
 
-from .schemes import TokenResponse
+from .schemes import LoginForm, TokenResponse
 from . import queries as qr
 from .validators import RegistrationValidator
 
 router = APIRouter(prefix="/auth")
 
 
-@router.post("/registration", response_model=UserResponse)
+@router.post("/registration", response_class=JSONResponse)
 async def create_user(
     user_create: UserCreate, session: AsyncSession = Depends(get_session)
 ):
@@ -26,15 +26,22 @@ async def create_user(
     await validator.validate()
 
     user = await qr.registration_user(session, user_create)
-    return UserResponse(
-        message="User created successfully", user=await user.to_pydantic()
+    return JSONResponse(
+        content=UserResponse(
+            message="User created successfully", user=await user.to_pydantic()
+        ).dict(),
+        status_code=status.HTTP_201_CREATED,
     )
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_class=JSONResponse)
 async def get_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    login_form: LoginForm = Depends(LoginForm.as_form),
     session: AsyncSession = Depends(get_session),
 ):
-    msg, token = await qr.login(session, form_data.username, form_data.password)
-    return TokenResponse(message=msg, token=token.token)
+    code, message, token = await qr.login(
+        session, login_form.username, login_form.password
+    )
+    return JSONResponse(
+        content=TokenResponse(message=message, access_token=token).dict(), status_code=code
+    )
