@@ -13,8 +13,6 @@ from ..duty.schemes import BaseDuty
 
 from .models import Group, Specialization
 from .schemes import (
-    GroupForm,
-    GroupFormsInfo,
     BaseGroup,
     GroupInDB,
     Student,

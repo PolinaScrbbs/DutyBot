@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Depends, APIRouter, HTTPException, status, Response
+from fastapi import Depends, APIRouter, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session

@@ -1,5 +1,5 @@
 from fastapi import Form
-from typing import Any, Optional
+from typing import Optional
 from pydantic import BaseModel
 
 

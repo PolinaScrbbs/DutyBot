@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from ..user import utils as ut
 from ..applications.models import ApplicationStatus
 
 from .models import Specialization
-from .schemes import BaseGroup, GroupInDB, GroupResponse, GroupForm, StudentWithDuties
+from .schemes import GroupInDB, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .utils import validate_group_access
 from .validators import GroupValidator
