@@ -5,10 +5,9 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from config import BOT_TOKEN
+from handlers.special import bot
 from handlers.admin import router
 from handlers.group import group_menu
-
 
 @router.callback_query(F.data == "back")
 async def back(callback: CallbackQuery, state: FSMContext):
@@ -29,19 +28,8 @@ async def back(callback: CallbackQuery, state: FSMContext):
 
 
 async def main():
-    bot = Bot(token=BOT_TOKEN)
-    await bot.set_chat_menu_button(
-        menu_button={
-            "type": "web_app",
-            "text": "Профиль",
-            "web_app": {
-                "url": "https://your-web-app-url.com"
-            }
-        }
-    )
     dp = Dispatcher()
     dp.include_router(router)
-
     try:
         print("Бот запущен")
         await dp.start_polling(bot)

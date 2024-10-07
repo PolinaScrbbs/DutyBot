@@ -11,7 +11,7 @@ from ..user.schemes import UserCreate
 
 async def registration_user(session: AsyncSession, user_create: UserCreate) -> User:
 
-    user = User(username=user_create.username, full_name=user_create.full_name)
+    user = User(username=user_create.username, full_name=user_create.full_name, avatar_url=user_create.avatar_url)
     user.set_password(user_create.password)
     session.add(user)
     await session.commit()

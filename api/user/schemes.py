@@ -2,16 +2,13 @@ from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
 
-
-class HiddenUser(BaseModel):
+class BaseUser(BaseModel):
     id: int
     role: str
     username: str
     full_name: str
     group_id: Optional[int] = None
-
-
-class BaseUser(HiddenUser):
+    avatar_url: Optional[str]
     created_at: Union[datetime, str]
 
 
@@ -20,6 +17,7 @@ class UserCreate(BaseModel):
     password: str
     confirm_password: str
     full_name: str
+    avatar_url: Optional[str] = None
 
 
 class UserUpdate(BaseUser):

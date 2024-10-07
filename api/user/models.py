@@ -39,6 +39,7 @@ class User(Base):
     full_name = Column(String(100), nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), default=None, nullable=True)
     created_at = Column(DateTime(True), server_default=func.now())
+    avatar_url = Column(String, default = None, unique=True, nullable=True)
 
     token = relationship("Token", back_populates="user", cascade="all, delete-orphan")
     created_group = relationship(
@@ -88,6 +89,7 @@ class User(Base):
             username=self.username,
             full_name=self.full_name,
             group_id=self.group_id,
+            avatar_url=self.avatar_url,
             created_at=self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         )
 

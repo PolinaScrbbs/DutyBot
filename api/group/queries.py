@@ -29,7 +29,7 @@ async def get_groups_list(
         select(Group)
         .options(
             selectinload(Group.creator).load_only(
-                User.id, User.role, User.username, User.full_name
+                User.id, User.role, User.username, User.full_name, User.avatar_url
             ),
             selectinload(Group.students),
         )

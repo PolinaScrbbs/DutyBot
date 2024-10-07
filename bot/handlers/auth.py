@@ -1,7 +1,7 @@
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from .special import router, cmd_start
+from .special import bot, router, cmd_start
 
 import response as response
 import keyboards as kb
@@ -36,13 +36,14 @@ async def get_confirm_password(message: Message, state: FSMContext):
 async def registration(message: Message, state: FSMContext):
     user_data = await state.get_data()
 
+    user_id = message.from_user.id
     username = message.from_user.username
     password = str(user_data["password"])
     confirm_password = str(message.text)
     full_name = str(user_data["full_name"])
 
     status, json_response = await response.registraion(
-        username, password, confirm_password, full_name
+        bot, user_id, username, password, confirm_password, full_name
     )
 
     await state.clear()
