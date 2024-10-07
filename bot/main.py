@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from config import BOT_TOKEN
-from handlers.duty import router
+from handlers.admin import router
 from handlers.group import group_menu
 
 
@@ -30,6 +30,15 @@ async def back(callback: CallbackQuery, state: FSMContext):
 
 async def main():
     bot = Bot(token=BOT_TOKEN)
+    await bot.set_chat_menu_button(
+        menu_button={
+            "type": "web_app",
+            "text": "Профиль",
+            "web_app": {
+                "url": "https://your-web-app-url.com"
+            }
+        }
+    )
     dp = Dispatcher()
     dp.include_router(router)
 

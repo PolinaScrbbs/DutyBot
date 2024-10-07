@@ -27,8 +27,17 @@ async def cmd_start(message: Message, state: FSMContext):
         user_data["user"] = user
         await state.update_data(user_data)
 
-        if user["role"] == "Админ":
-            pass
+        if user["role"] == "Администратор":
+            status, applications = await response.get_applications(
+                token=token, application_type="Стать старостой"
+            )
+            applications_count = 0
+            if status == 200:
+                applications_count = len(applications)
+            keyboard = await kb.admin_main(applications_count)
+            user_data["applications"] = applications
+            await state.update_data(user_data)
+
         elif user["group_id"] is not None:
             group = await response.get_group(token)
             user_data["group"] = group

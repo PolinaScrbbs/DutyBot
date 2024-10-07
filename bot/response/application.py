@@ -26,12 +26,19 @@ async def get_applications(
     group_id: Optional[int] = None,
 ) -> Tuple[int, dict]:
 
-    params = {
-        "skip": skip,
-        "limit": limit,
-        "application_type": application_type,
-        "group_id": group_id,
-    }
+    if group_id:
+        params = {
+            "skip": skip,
+            "limit": limit,
+            "application_type": application_type,
+            "group_id": group_id,
+        }
+    else:
+        params = {
+            "skip": skip,
+            "limit": limit,
+            "application_type": application_type,
+        }
 
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.get(

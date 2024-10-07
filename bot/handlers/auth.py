@@ -47,7 +47,7 @@ async def registration(message: Message, state: FSMContext):
 
     await state.clear()
     if status == 201:
-        await message.answer(f"*{json_response['message'].upper()}*", "Markdown")
+        await message.answer(f"*{json_response['message'].upper()}*", "Markdown", reply_markup=kb.start)
     else:
         await message.answer(f"❌ *{json_response['detail'].upper()}*", "Markdown")
 
