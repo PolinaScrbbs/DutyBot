@@ -1,12 +1,12 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Dispatcher, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from handlers.special import bot
-from handlers.admin import router
+from handlers.duty import router
 from handlers.group import group_menu
 
 @router.callback_query(F.data == "back")

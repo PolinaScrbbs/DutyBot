@@ -12,7 +12,7 @@ class Sending(BaseModel):
 
 
 class ApplicationForm(BaseModel):
-    type: ApplicationType = ApplicationType.BECOME_ELDER
+    application_type: ApplicationType = ApplicationType.BECOME_ELDER
     group_id: Optional[int] = None
 
 

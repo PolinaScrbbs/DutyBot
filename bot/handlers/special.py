@@ -9,20 +9,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 from config import BOT_TOKEN
 
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(BOT_TOKEN)
 router = Router()
-
-async def set_user_profile_button(bot, chat_id, username, token):
-    await bot.set_chat_menu_button(
-        menu_button={
-            "type": "web_app",
-            "text": "Профиль",
-            "web_app": {
-                "url": f""
-            }
-        },
-        chat_id=chat_id 
-    )
                 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
@@ -37,13 +25,6 @@ async def cmd_start(message: Message, state: FSMContext):
         status, user = await response.get_user_by_username(
             message.from_user.username, token
         )
-
-        # await set_user_profile_button(
-        #     bot=bot, 
-        #     chat_id=message.chat.id, 
-        #     username=message.from_user.username, 
-        #     token=token
-        # )
 
         user_data["user"] = user
         await state.update_data(user_data)
@@ -80,9 +61,10 @@ async def cmd_start(message: Message, state: FSMContext):
 @router.message(Command("profile"))
 async def profile(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    web_app_url = f"https://48d4-176-194-227-178.ngrok-free.app/profile?username={message.from_user.username}&token={user_data['token']}"
+    token = user_data["token"]
+    print(message.from_user.username, token)
+    web_app_url = f"https://8fbe-176-194-200-51.ngrok-free.app/profile?username={message.from_user.username}&token={token}"
 
-    # Создаем инлайн-кнопку
     inline_keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Открыть профиль", web_app=WebAppInfo(url=web_app_url))]

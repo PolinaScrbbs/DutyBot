@@ -72,4 +72,8 @@ async def put_application(
             headers={"Authorization": f"Bearer {token}"},
             params={"update_status": update_status},
         ) as response:
-            return response.status
+            if response.status == 200:
+                return response.status
+            else:
+                error_data = await response.json()
+                print(error_data)
