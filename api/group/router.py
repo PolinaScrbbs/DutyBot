@@ -53,7 +53,7 @@ async def get_groups(
         return groups
 
 
-@router.post("/groups", response_class=Response)
+@router.post("/groups", response_model=GroupResponse, status_code=201)
 async def post_group(
     group_data: GroupForm,
     session: AsyncSession = Depends(get_session),
@@ -80,13 +80,8 @@ async def post_group(
     pydantic_group = await group.to_pydantic()
     msg = f"The group {group.title} was created"
 
-    return JSONResponse(
-        content=GroupResponse(
-            message=msg,
-            group=pydantic_group,
-        ).dict(),
-        status_code=status.HTTP_201_CREATED,
-    )
+    return GroupResponse(message=msg,group=pydantic_group)
+        
 
 
 @router.get("/group/@{group_title}", response_model=GroupInDB)

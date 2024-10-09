@@ -7,7 +7,6 @@ from .group import router
 
 import response as response
 import keyboards as kb
-import utils as ut
 
 @router.message(lambda message: re.match(r"^Заявки\(\d+\)$", message.text))
 async def admin_applications(message: Message, state: FSMContext):

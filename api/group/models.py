@@ -74,6 +74,7 @@ class Group(Base):
 
     async def to_pydantic(self):
         return BaseGroup(
+            id=self.id,
             title=self.title,
             specialization=self.specialization,
             course_number=self.course_number,

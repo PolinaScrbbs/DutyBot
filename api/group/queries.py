@@ -44,7 +44,7 @@ async def get_groups_list(
 
 async def create_group(
     session: AsyncSession, group_create: BaseGroup, creator_id: int
-) -> BaseGroup:
+) -> Group:
 
     group = Group(
         title=group_create.title,
@@ -59,6 +59,7 @@ async def create_group(
     user.group_id = creator_id
 
     await session.commit()
+    await session.refresh(group)
     return group
 
 
