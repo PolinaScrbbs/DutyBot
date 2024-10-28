@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+    <title>Profile</title>
+</head>
+<body>
+    <div class="profile">
+        <div class="profile__info">
+            <img class="profile__img" src="{{ user.avatar_url }}" alt="profileImg">
+            <div class="profile__nickname">🎓{{user.username}}</div>
+            <div class="profile__nickname">{{user.role}}</div>
+            <div class="profile__name">{{user.full_name}}</div>
+            <div class="profile__date">
+                {{user.created_at}}
+            </div>
+        </div>
+        {% if not user.group_id %}
+            <div class="profile__nickname">В группе не состоит</div>
+        {% else %}
+        <div class="profile__items">
+            <div class="profile__item profileGroup">
+                <div class="profileGroup__top">
+                    <div>{{group.title}}</div>
+                    <div>{{group.course_number_roman}}</div>
+                </div>
+                <div class="profileGroup__spec">
+                    {{group.specialization}}
+                </div>
+                <div class="profileGroup__bottom">
+                    <div class="profileGroup__date">{{group.created_at}}</div>
+                    <div class="profileGroup__role">
+                        Студент
+                    </div>
+                </div>
+            </div>
+            <div class="profile__item profileTable">
+                <table>
+                    {% for dict in duties %}
+                    <tr>
+                        <td>{{ dict.attendant.username }}</td>
+                        <td>{{ dict.date }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>              
+            </div>
+        </div>
+        {% endif %}
+        <div class="profile__creator">
+            <span>by</span> PolinaScrbbs
+        </div>
+    </div>
+</body>
+</html>

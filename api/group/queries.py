@@ -115,13 +115,14 @@ async def get_group_without_user_application(
 async def get_group_students(
     session: AsyncSession, current_user_id: int, group_id: Optional[int] = None
 ) -> List[StudentWithDuties]:
-
+    print(group_id)
     result = await session.execute(
         select(
             User,
             func.count(Duty.id).label("duties_count"),
             func.max(Duty.date).label("last_duty"),
         )
+        .join(Duty, Duty.attendant_id == User.id, isouter=True)
         .where(
             User.id != current_user_id,
             User.group_id == group_id
@@ -146,9 +147,9 @@ async def get_group_students(
             student=Student(
                 id=user.id,
                 username=user.username,
-                full_name=user.full_name,
+                full_name=await user.formatted_full_name(),
                 duties_count=duties_count,
-                last_duty=last_duty
+                last_duty=last_duty.strftime("%Y-%m-%d") if last_duty else "-"
             ),
             duties=duties
         )

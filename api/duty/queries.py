@@ -55,7 +55,10 @@ async def get_users_data(
 ) -> List[Tuple[User, List[Duty]]]:
     await duty_protection(current_user, group_id)
 
-    query = select(User).where(User.group_id == group_id, User.id != current_user.id)
+    if current_user.role != Role.STUDENT:
+        query = select(User).where(User.group_id == group_id, User.id != current_user.id)
+    else:
+        query = select(User).where(User.group_id == group_id, User.id == current_user.id)
 
     if attendant_id is not None:
         query = query.where(User.id == attendant_id)
@@ -74,6 +77,9 @@ async def get_group_duties(
     group_id: Optional[int] = None,
     attendant_id: Optional[int] = None,
 ) -> List[DutyWithOutId]:
+    
+    if group_id is None:
+        group_id = current_user.group_id
 
     attendants_data = await get_users_data(
         session, current_user, group_id, attendant_id
@@ -126,7 +132,6 @@ async def get_group_attendants(
 
     sorted_students = sorted(students, key=lambda x: (x[3], x[4] or datetime.min))
     bottom_students = sorted_students[:2]
-    print(bottom_students)
 
     return [
         BaseStudent(

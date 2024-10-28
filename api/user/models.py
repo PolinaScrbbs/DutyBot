@@ -92,6 +92,11 @@ class User(Base):
             avatar_url=self.avatar_url,
             created_at=self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         )
+    
+    async def formatted_full_name(self) -> str:
+        name_parts = self.full_name.split()
+        last_name, first_name, middle_name = name_parts
+        return f"{last_name} {first_name[0]}. {middle_name[0]}."
 
     async def duties_count(self, session: AsyncSession) -> int:
         result = await session.execute(

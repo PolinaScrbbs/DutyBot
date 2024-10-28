@@ -7,7 +7,7 @@ import response as response
 import keyboards as kb
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-from config import BOT_TOKEN
+from config import BOT_TOKEN, NGROK_URL
 
 bot = Bot(BOT_TOKEN)
 router = Router()
@@ -63,7 +63,7 @@ async def profile(message: Message, state: FSMContext):
     user_data = await state.get_data()
     token = user_data["token"]
     print(message.from_user.username, token)
-    web_app_url = f"https://8fbe-176-194-200-51.ngrok-free.app/profile?username={message.from_user.username}&token={token}"
+    web_app_url = f"{NGROK_URL}profile?username={message.from_user.username}&token={token}"
 
     inline_keyboard = InlineKeyboardMarkup(
         inline_keyboard=[

@@ -14,6 +14,7 @@ async def get_specializations(token: str):
 
 
 async def post_group(title: str, specialization: str, course_number: int, token: str):
+    print(title, specialization, course_number)
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.post(
             "/groups",
@@ -45,7 +46,6 @@ async def get_groups(
 
 
 async def get_group(token: str) -> Tuple[int, dict]:
-
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.get(
             "/group",
@@ -55,7 +55,6 @@ async def get_group(token: str) -> Tuple[int, dict]:
 
 
 async def get_students(token: str) -> Tuple[int, List[dict]]:
-
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.get(
             "/group/students",
