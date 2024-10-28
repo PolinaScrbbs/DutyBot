@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
 
+
 class BaseUser(BaseModel):
     id: int
     role: str

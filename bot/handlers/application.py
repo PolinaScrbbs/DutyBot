@@ -64,7 +64,7 @@ async def update_application(callback: CallbackQuery, state: FSMContext):
     token = user_data["token"]
 
     await response.put_application(token, application_id, update_status)
-    
+
     msg = "✅ Заявка отклонена"
     if update_status == "Принят":
         msg = "✅ Заявка принята"
@@ -75,7 +75,7 @@ async def update_application(callback: CallbackQuery, state: FSMContext):
     if user["role"] == "Администратор":
         await clear_user_data(state, token, user)
         await asyncio.sleep(3)
-        await admin_applications(callback.message, state) 
+        await admin_applications(callback.message, state)
     else:
         await asyncio.sleep(3)
         await group_applications_list(callback, state)

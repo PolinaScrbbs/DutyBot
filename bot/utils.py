@@ -37,6 +37,7 @@ async def create_duties_msg(initial_line: str, duties: List[dict]) -> str:
 
     return msg
 
+
 async def get_user_avatar(bot: Bot, user_id: int):
     photos = await bot.get_user_profile_photos(user_id)
     if photos.total_count > 0:
@@ -48,15 +49,17 @@ async def get_user_avatar(bot: Bot, user_id: int):
 
         file_path = file_info.file_path
 
-        url = f'https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}'
+        url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if resp.status == 200:
                     os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-                    path = os.path.join(DOWNLOAD_FOLDER, f"avatars/{user_id}_avatar.jpg")
-                    with open(path, 'wb') as f:
+                    path = os.path.join(
+                        DOWNLOAD_FOLDER, f"avatars/{user_id}_avatar.jpg"
+                    )
+                    with open(path, "wb") as f:
                         f.write(await resp.read())
                     return path
 

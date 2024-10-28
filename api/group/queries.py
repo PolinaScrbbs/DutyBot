@@ -93,10 +93,7 @@ async def get_group_without_user_application(
 
     result = await session.execute(
         select(Group)
-        .options(
-            selectinload(Group.creator),
-            selectinload(Group.students)
-        )
+        .options(selectinload(Group.creator), selectinload(Group.students))
         .where(
             ~exists(
                 select(Application.id).where(
@@ -105,7 +102,7 @@ async def get_group_without_user_application(
                     Application.group_id == Group.id,
                 )
             )
-        )  
+        )
     )
 
     groups = result.scalars().all()
@@ -123,25 +120,20 @@ async def get_group_students(
             func.max(Duty.date).label("last_duty"),
         )
         .join(Duty, Duty.attendant_id == User.id, isouter=True)
-        .where(
-            User.id != current_user_id,
-            User.group_id == group_id
-        )
+        .where(User.id != current_user_id, User.group_id == group_id)
         .options(selectinload(User.duties))
         .group_by(User.id)
     )
-    
+
     rows = result.all()
-    
+
     students_with_duties = []
     for row in rows:
         user = row[0]
         duties_count = row.duties_count
         last_duty = row.last_duty
 
-        duties = [
-            BaseDuty(id=duty.id, date=duty.date) for duty in user.duties
-        ] 
+        duties = [BaseDuty(id=duty.id, date=duty.date) for duty in user.duties]
 
         student_with_duties = StudentWithDuties(
             student=Student(
@@ -149,16 +141,16 @@ async def get_group_students(
                 username=user.username,
                 full_name=await user.formatted_full_name(),
                 duties_count=duties_count,
-                last_duty=last_duty.strftime("%Y-%m-%d") if last_duty else "-"
+                last_duty=last_duty.strftime("%Y-%m-%d") if last_duty else "-",
             ),
-            duties=duties
+            duties=duties,
         )
-        
+
         students_with_duties.append(student_with_duties)
-    
+
     return students_with_duties
-    
-    
+
+
 async def get_group_student(
     session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:
@@ -193,9 +185,7 @@ async def get_group_student(
         last_duty=last_duty,
     )
 
-    duties = [
-            BaseDuty(id=duty.id, date=duty.date) for duty in student_data.duties
-        ] 
+    duties = [BaseDuty(id=duty.id, date=duty.date) for duty in student_data.duties]
 
     return StudentWithDuties(student=student, duties=duties)
 

@@ -11,7 +11,11 @@ from ..user.schemes import UserCreate
 
 async def registration_user(session: AsyncSession, user_create: UserCreate) -> User:
 
-    user = User(username=user_create.username, full_name=user_create.full_name, avatar_url=user_create.avatar_url)
+    user = User(
+        username=user_create.username,
+        full_name=user_create.full_name,
+        avatar_url=user_create.avatar_url,
+    )
     user.set_password(user_create.password)
     session.add(user)
     await session.commit()
@@ -71,6 +75,7 @@ async def verify_token_and_get_user(session: AsyncSession, token: str) -> User:
     user = await get_user_by_id(session, token.user_id)
 
     return user
+
 
 async def get_current_user(
     session: AsyncSession = Depends(get_session),

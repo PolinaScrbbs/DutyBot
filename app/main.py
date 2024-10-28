@@ -1,4 +1,3 @@
-
 import locale
 from datetime import datetime
 import os
@@ -9,19 +8,25 @@ from quart import Quart, render_template, request, send_from_directory
 from response import get_user, get_groups, get_group, get_students, get_duties
 from utils import formatted_full_name
 
-app = Quart(__name__, template_folder='./templates', static_url_path='/static', static_folder='static')
-MEDIA_FOLDER = os.path.join(app.root_path, 'media')
+app = Quart(
+    __name__,
+    template_folder="./templates",
+    static_url_path="/static",
+    static_folder="static",
+)
+MEDIA_FOLDER = os.path.join(app.root_path, "media")
 
-@app.route('/profile')
+
+@app.route("/profile")
 async def profile():
-    username = request.args.get('username')
-    token = request.args.get('token')
-    
+    username = request.args.get("username")
+    token = request.args.get("token")
+
     status, user = await get_user(username, token)
 
-    locale.setlocale(locale.LC_TIME, 'Russian')
+    locale.setlocale(locale.LC_TIME, "Russian")
     created_at = user["created_at"]
-    date_object  = datetime.fromisoformat(created_at)
+    date_object = datetime.fromisoformat(created_at)
     user["created_at"] = date_object.strftime("%d %B %Yг.")
 
     context = {
@@ -32,7 +37,7 @@ async def profile():
         status, group = await get_group(token)
         group["course_number_roman"] = roman.toRoman(group["course_number"])
         created_at = group["created_at"]
-        date_object  = datetime.fromisoformat(created_at)
+        date_object = datetime.fromisoformat(created_at)
         group["created_at"] = date_object.strftime("%d %B %Yг.")
         context["group"] = group
 
@@ -50,7 +55,7 @@ async def profile():
         groups_list = []
         for group in groups:
             created_at = group["created_at"]
-            date_object  = datetime.fromisoformat(created_at)
+            date_object = datetime.fromisoformat(created_at)
             group["created_at"] = date_object.strftime("%d %B %Yг.")
             group["creator"] = await formatted_full_name(group["creator"]["full_name"])
             groups_list.append(group)
@@ -59,14 +64,16 @@ async def profile():
     templates = {
         "Администратор": "adminProfile.html",
         "Староста": "elderProfile.html",
-        "Студент": "studentProfile.html"
+        "Студент": "studentProfile.html",
     }
 
     return await render_template(templates[user["role"]], **context)
 
-@app.route('/media/<path:filename>')
+
+@app.route("/media/<path:filename>")
 async def media(filename):
     return await send_from_directory(MEDIA_FOLDER, filename)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)

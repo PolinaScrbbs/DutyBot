@@ -8,6 +8,7 @@ from .group import router
 import response as response
 import keyboards as kb
 
+
 @router.message(lambda message: re.match(r"^Заявки\(\d+\)$", message.text))
 async def admin_applications(message: Message, state: FSMContext):
     user_data = await state.get_data()
@@ -20,7 +21,9 @@ async def admin_applications(message: Message, state: FSMContext):
         )
 
         if status == 204:
-            await message.answer("Список заявок пуст", reply_markup=kb.inline_applications(applications))
+            await message.answer(
+                "Список заявок пуст", reply_markup=kb.inline_applications(applications)
+            )
 
         await state.update_data(applications=applications)
     else:
@@ -29,9 +32,3 @@ async def admin_applications(message: Message, state: FSMContext):
             parse_mode="Markdown",
             reply_markup=await kb.inline_applications(applications),
         )
-
-
-
-
-    
-

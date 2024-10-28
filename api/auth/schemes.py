@@ -15,9 +15,14 @@ class LoginForm(BaseModel):
         username: str = Form(...),
         password: str = Form(...),
         client_id: Optional[int] = Form(None),
-        client_secret: Optional[str] = Form(None)
+        client_secret: Optional[str] = Form(None),
     ):
-        return cls(username=username, password=password, client_id=client_id, client_secret=client_secret)
+        return cls(
+            username=username,
+            password=password,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
 
 
 class TokenResponse(BaseModel):

@@ -45,6 +45,7 @@ class GroupResponse(BaseModel):
     message: str
     group: BaseGroup
 
+
 class StudentWithDuties(BaseModel):
     student: Student
     duties: List[BaseDuty]

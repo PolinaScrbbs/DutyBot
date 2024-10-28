@@ -7,6 +7,7 @@ class BaseDuty(BaseModel):
     id: int
     date: Union[datetime, str]
 
+
 class BaseStudent(BaseModel):
     id: int
     username: str

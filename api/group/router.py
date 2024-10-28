@@ -80,8 +80,7 @@ async def post_group(
     pydantic_group = await group.to_pydantic()
     msg = f"The group {group.title} was created"
 
-    return GroupResponse(message=msg,group=pydantic_group)
-        
+    return GroupResponse(message=msg, group=pydantic_group)
 
 
 @router.get("/group/@{group_title}", response_model=GroupInDB)

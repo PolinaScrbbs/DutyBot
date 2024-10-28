@@ -39,7 +39,7 @@ class User(Base):
     full_name = Column(String(100), nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), default=None, nullable=True)
     created_at = Column(DateTime(True), server_default=func.now())
-    avatar_url = Column(String, default = None, unique=True, nullable=True)
+    avatar_url = Column(String, default=None, unique=True, nullable=True)
 
     token = relationship("Token", back_populates="user", cascade="all, delete-orphan")
     created_group = relationship(
@@ -92,7 +92,7 @@ class User(Base):
             avatar_url=self.avatar_url,
             created_at=self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         )
-    
+
     async def formatted_full_name(self) -> str:
         name_parts = self.full_name.split()
         last_name, first_name, middle_name = name_parts

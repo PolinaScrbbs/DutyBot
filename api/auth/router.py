@@ -43,5 +43,6 @@ async def get_token(
         session, login_form.username, login_form.password
     )
     return JSONResponse(
-        content=TokenResponse(message=message, access_token=token).dict(), status_code=code
+        content=TokenResponse(message=message, access_token=token).dict(),
+        status_code=code,
     )

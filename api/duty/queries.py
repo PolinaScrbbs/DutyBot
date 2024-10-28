@@ -56,9 +56,13 @@ async def get_users_data(
     await duty_protection(current_user, group_id)
 
     if current_user.role != Role.STUDENT:
-        query = select(User).where(User.group_id == group_id, User.id != current_user.id)
+        query = select(User).where(
+            User.group_id == group_id, User.id != current_user.id
+        )
     else:
-        query = select(User).where(User.group_id == group_id, User.id == current_user.id)
+        query = select(User).where(
+            User.group_id == group_id, User.id == current_user.id
+        )
 
     if attendant_id is not None:
         query = query.where(User.id == attendant_id)
@@ -77,7 +81,7 @@ async def get_group_duties(
     group_id: Optional[int] = None,
     attendant_id: Optional[int] = None,
 ) -> List[DutyWithOutId]:
-    
+
     if group_id is None:
         group_id = current_user.group_id
 

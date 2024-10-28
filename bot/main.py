@@ -9,6 +9,7 @@ from handlers.special import bot
 from handlers.duty import router
 from handlers.group import group_menu
 
+
 @router.callback_query(F.data == "back")
 async def back(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()

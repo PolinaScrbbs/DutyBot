@@ -6,6 +6,7 @@ from aiogram.types import (
     InlineKeyboardButton,
 )
 
+
 async def admin_main(application_count: int):
     admin_main = ReplyKeyboardMarkup(
         keyboard=[
