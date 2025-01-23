@@ -9,7 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from enum import Enum as BaseEnum
 
-from ..duty.models import Base
+from ..group.models import Base
 
 
 class ApplicationType(BaseEnum):

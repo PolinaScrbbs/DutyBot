@@ -2,11 +2,11 @@ from typing import List, Tuple
 
 import aiohttp
 
-from config import API_URL
+from ..config import config as conf
 
 
 async def get_duties(token: str) -> Tuple[int, dict]:
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
             "/duties", headers={"Authorization": f"Bearer {token}"}
         ) as response:
@@ -18,7 +18,7 @@ async def get_duties(token: str) -> Tuple[int, dict]:
 
 
 async def get_attendants(token: str, missed_student_id: List[int]) -> Tuple[int, dict]:
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
             "/attendants",
             json=missed_student_id,
@@ -28,7 +28,7 @@ async def get_attendants(token: str, missed_student_id: List[int]) -> Tuple[int,
 
 
 async def post_duty(token: str, students_id: List[int]) -> int:
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.post(
             "/duties", json=students_id, headers={"Authorization": f"Bearer {token}"}
         ) as response:

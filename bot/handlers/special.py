@@ -1,15 +1,15 @@
 from aiogram import F, Bot, Router
 from aiogram.types import CallbackQuery, Message
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
-import response as response
-import keyboards as kb
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from .. import response
+from .. import keyboards as kb
+#from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-from config import BOT_TOKEN, NGROK_URL
+from ..config import config as conf
 
-bot = Bot(BOT_TOKEN)
+bot = Bot(conf.bot_token)
 router = Router()
 
 
@@ -60,28 +60,28 @@ async def cmd_start(message: Message, state: FSMContext):
     await message.answer(text=msg, parse_mode="Markdown", reply_markup=keyboard)
 
 
-@router.message(Command("profile"))
-async def profile(message: Message, state: FSMContext):
-    user_data = await state.get_data()
-    token = user_data["token"]
-    print(message.from_user.username, token)
-    web_app_url = (
-        f"{NGROK_URL}profile?username={message.from_user.username}&token={token}"
-    )
-
-    inline_keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Открыть профиль", web_app=WebAppInfo(url=web_app_url)
-                )
-            ]
-        ]
-    )
-
-    await message.answer(
-        "Откройте профиль, нажав на кнопку ниже:", reply_markup=inline_keyboard
-    )
+# @router.message(Command("profile"))
+# async def profile(message: Message, state: FSMContext):
+#     user_data = await state.get_data()
+#     token = user_data["token"]
+#     print(message.from_user.username, token)
+#     web_app_url = (
+#         f"{NGROK_URL}profile?username={message.from_user.username}&token={token}"
+#     )
+#
+#     inline_keyboard = InlineKeyboardMarkup(
+#         inline_keyboard=[
+#             [
+#                 InlineKeyboardButton(
+#                     text="Открыть профиль", web_app=WebAppInfo(url=web_app_url)
+#                 )
+#             ]
+#         ]
+#     )
+#
+#     await message.answer(
+#         "Откройте профиль, нажав на кнопку ниже:", reply_markup=inline_keyboard
+#     )
 
 
 @router.callback_query(F.data == "cancel")

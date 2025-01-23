@@ -6,8 +6,8 @@ from aiogram.fsm.context import FSMContext
 
 from .ungroup import router
 
-import response as response
-import keyboards as kb
+from .. import response
+from .. import keyboards as kb
 
 
 @router.message(lambda message: message.text == "Группа")

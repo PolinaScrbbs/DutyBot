@@ -5,14 +5,10 @@ from sqlalchemy import (
     Integer,
     func,
 )
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import relationship
 
+from ..applications.models import Base
 from .schemes import Student, DutyWithOutId
-
-
-class Base(DeclarativeBase):
-    pass
-
 
 class Duty(Base):
     __tablename__ = "duties"

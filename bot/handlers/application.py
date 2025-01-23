@@ -4,11 +4,11 @@ from aiogram import F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from utils import clear_user_data
 from .admin import router, admin_applications
 
-import response as response
-import keyboards as kb
+from .. import response
+from .. import keyboards as kb
+from ..utils import clear_user_data
 
 
 @router.callback_query(F.data == "grp_applications")

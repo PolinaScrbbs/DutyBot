@@ -4,10 +4,10 @@ from typing import Dict, Any, List, Optional
 from aiogram import Bot
 from aiogram.fsm.context import FSMContext
 
-from config import BOT_TOKEN, DOWNLOAD_FOLDER
+from .config import config as conf
 
 
-async def get_user_token(user_data: Dict[str, Any]) -> str:
+async def get_user_token(user_data: Dict[str, Any]) -> Optional[str]:
     token = user_data.get("token", None)
     return token
 
@@ -38,7 +38,7 @@ async def create_duties_msg(initial_line: str, duties: List[dict]) -> str:
     return msg
 
 
-async def get_user_avatar(bot: Bot, user_id: int):
+async def get_user_avatar(bot: Bot, user_id: int) -> Optional[str]:
     photos = await bot.get_user_profile_photos(user_id)
     if photos.total_count > 0:
         photo = photos.photos[0][-1]
@@ -49,18 +49,18 @@ async def get_user_avatar(bot: Bot, user_id: int):
 
         file_path = file_info.file_path
 
-        url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        url = f"https://api.telegram.org/file/bot{conf.bot_token}/{file_path}"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if resp.status == 200:
-                    os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+                    avatars_folder = os.path.join(conf.media_folder, "avatars")
+                    os.makedirs(avatars_folder, exist_ok=True)
 
-                    path = os.path.join(
-                        DOWNLOAD_FOLDER, f"avatars/{user_id}_avatar.jpg"
-                    )
+                    path = os.path.join(avatars_folder, f"{user_id}_avatar.jpg")
                     with open(path, "wb") as f:
                         f.write(await resp.read())
                     return path
 
     return None
+

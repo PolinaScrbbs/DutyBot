@@ -16,10 +16,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 from enum import Enum as BaseEnum
-from config import SECRET_KEY
 
-from ..duty.models import Duty
-from ..group.models import Base
+from ..config import config as conf
+from ..database import Base
 from .schemes import BaseUser
 
 
@@ -65,12 +64,12 @@ class User(Base):
             password.encode("utf-8"), self.hashed_password.encode("utf-8")
         )
 
-    async def generate_token(self, expires_in: int = 4800) -> str:
+    async def generate_token(self, expires_in: int = conf.token_lifetime) -> str:
         payload = {
             "user_id": self.id,
             "exp": datetime.now(timezone.utc) + timedelta(seconds=expires_in),
         }
-        return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        return jwt.encode(payload, conf.secret_key, algorithm="HS256")
 
     def get_token(self) -> "Token":
         return self.tokens[0] if self.tokens else None
@@ -126,7 +125,7 @@ class Token(Base):
 
     async def verify_token(self, session: AsyncSession, user: Optional[User]):
         try:
-            jwt.decode(self.token, SECRET_KEY, algorithms=["HS256"])
+            jwt.decode(self.token, conf.secret_key, algorithms=["HS256"])
             return status.HTTP_200_OK, "The user's token has been verified", self
 
         except jwt.ExpiredSignatureError:

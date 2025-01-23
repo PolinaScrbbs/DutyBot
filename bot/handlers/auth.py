@@ -3,9 +3,9 @@ from aiogram.fsm.context import FSMContext
 
 from .special import bot, router, cmd_start
 
-import response as response
-import keyboards as kb
-import states as st
+from .. import response
+from .. import keyboards as kb
+from .. import states as st
 
 
 @router.message(lambda message: message.text == "Регистрация")
@@ -49,7 +49,7 @@ async def registration(message: Message, state: FSMContext):
     await state.clear()
     if status == 201:
         await message.answer(
-            f"*{json_response['message'].upper()}*", "Markdown", reply_markup=kb.start
+            f"✅ *Пользователь зарегестрирован*", "Markdown", reply_markup=kb.start
         )
     else:
         await message.answer(f"❌ *{json_response['detail'].upper()}*", "Markdown")
@@ -71,11 +71,6 @@ async def authorazation(message: Message, state: FSMContext):
     await state.clear()
     if status in [200, 201]:
         await state.update_data({"token": json_response["access_token"]})
-        await message.answer(
-            f"✅ *{json_response['message'].upper()}*",
-            "Markdown",
-        )
-
         await cmd_start(message, state)
     else:
         await message.answer(

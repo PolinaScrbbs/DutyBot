@@ -4,9 +4,9 @@ from aiogram.fsm.context import FSMContext
 
 from .application import router
 
-import response as response
-import keyboards as kb
-import utils as ut
+from .. import response
+from .. import keyboards as kb
+from .. import utils as ut
 
 
 @router.message(lambda message: message.text == "Дежурства")

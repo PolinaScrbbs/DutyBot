@@ -1,15 +1,14 @@
 from typing import Optional, Tuple
-
 import aiohttp
 
-from config import API_URL
+from ..config import config as conf
 
 
 async def post_application(
     token: str, type: str = "Стать старостой", group_id: Optional[int] = None
 ) -> Tuple[int, dict]:
 
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.post(
             "/applications",
             headers={"Authorization": f"Bearer {token}"},
@@ -40,7 +39,7 @@ async def get_applications(
             "application_type": application_type,
         }
 
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
             "/applications", headers={"Authorization": f"Bearer {token}"}, params=params
         ) as response:
@@ -54,7 +53,7 @@ async def get_applications(
 
 async def get_application(token: str, application_id: int) -> Tuple[int, dict]:
 
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
             f"/application/{application_id}",
             headers={"Authorization": f"Bearer {token}"},
@@ -66,7 +65,7 @@ async def put_application(
     token: str, application_id: int, update_status: str
 ) -> Tuple[int, dict]:
 
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.put(
             f"/application/{application_id}",
             headers={"Authorization": f"Bearer {token}"},

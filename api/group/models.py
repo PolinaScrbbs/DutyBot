@@ -11,7 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 from enum import Enum as BaseEnum
 
-from ..applications.models import Base
+from ..user.models import Base
 
 from .schemes import BaseGroup
 

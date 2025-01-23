@@ -3,10 +3,10 @@ from aiogram.fsm.context import FSMContext
 
 from .auth import router
 
-import response as response
-import keyboards as kb
-import states as st
-import utils as ut
+from .. import response
+from .. import keyboards as kb
+from .. import states as st
+from .. import utils as ut
 
 
 @router.message(lambda message: message.text == "Создать группу")

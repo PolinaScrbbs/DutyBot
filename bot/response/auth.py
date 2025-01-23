@@ -1,9 +1,8 @@
 import aiohttp
 from aiogram import Bot
 
-from config import API_URL
-
-from utils import get_user_avatar
+from ..config import config as conf
+from ..utils import get_user_avatar
 
 
 async def registraion(
@@ -16,7 +15,7 @@ async def registraion(
 ):
     avatar_url = await get_user_avatar(bot, user_id)
 
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.post(
             "/auth/registration",
             json={
@@ -31,7 +30,7 @@ async def registraion(
 
 
 async def authorization(username: str, password: str):
-    async with aiohttp.ClientSession(API_URL) as session:
+    async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.post(
             "/auth/login", data={"username": username, "password": password}
         ) as response:

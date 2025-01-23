@@ -1,18 +1,16 @@
 from dotenv import load_dotenv
 import os
 
-os.environ.pop("DATABASE_URL", None)
-os.environ.pop("SECRET_KEY", None)
+class Config:
+    def __init__(self):
+        os.environ.pop("BOT_TOKEN", None)
+        os.environ.pop("DOWNLOAD_FOLDER", None)
+        os.environ.pop("API_URL", None)
 
-os.environ.pop("BOT_TOKEN", None)
-os.environ.pop("DOWNLOAD_FOLDER", None)
-os.environ.pop("API_URL", None)
+        load_dotenv()
 
-load_dotenv()
+        self.bot_token = os.getenv("BOT_TOKEN")
+        self.api_url = os.getenv("API_URL")
+        self.media_folder = os.getenv("BOT_MEDIA_FOLDER")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-DOWNLOAD_FOLDER = os.getenv("DOWNLOAD_FOLDER")
-API_URL = os.getenv("API_URL")
+config = Config()
