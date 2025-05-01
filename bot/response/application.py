@@ -25,7 +25,7 @@ async def get_applications(
     group_id: Optional[int] = None,
 ) -> Tuple[int, dict]:
 
-    if group_id:
+    if group_id is not None:
         params = {
             "skip": skip,
             "limit": limit,

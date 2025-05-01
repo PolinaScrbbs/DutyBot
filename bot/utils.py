@@ -23,7 +23,7 @@ async def clear_user_data(
     await state.update_data({"token": token, "user": user, "group": group})
 
 
-async def create_duties_msg(initial_line: str, duties: List[dict]) -> str:
+async def create_duties_msg(initial_line: str, duties: dict) -> str:
     msg = initial_line
 
     for duty in duties:

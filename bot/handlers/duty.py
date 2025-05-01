@@ -91,9 +91,9 @@ async def duty_list(message: Message, state: FSMContext):
 
     if status == 204:
         await message.answer("Список дежурств пуст", parse_mode="Markdown")
-
-    msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
-    await message.answer(msg, parse_mode="Markdown")
+    else:
+        msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
+        await message.answer(msg, parse_mode="Markdown")
 
 
 @router.message(lambda message: message.text == "Количество дежурств")
@@ -105,13 +105,13 @@ async def duty_count(message: Message, state: FSMContext):
 
     if status == 204:
         await message.answer("Список дежурств пуст", parse_mode="Markdown")
+    else:
+        msg = "🧹*Количество дежурств:*\n\n"
+        for duty in duties_count:
+            msg += (
+                f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
+                f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
+                f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
+            )
 
-    msg = "🧹*Количество дежурств:*\n\n"
-    for duty in duties_count:
-        msg += (
-            f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
-            f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
-            f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
-        )
-
-    await message.answer(msg, parse_mode="Markdown")
+        await message.answer(msg, parse_mode="Markdown")

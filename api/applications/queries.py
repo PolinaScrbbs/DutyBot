@@ -152,7 +152,6 @@ async def update_application(
     application_id: int,
     update_status: ApplicationStatus,
 ) -> str:
-
     application = await get_application_by_id(session, application_id)
 
     if current_user.role == Role.ELDER:
@@ -165,24 +164,32 @@ async def update_application(
                 detail="Insufficient rights to access this resource",
             )
 
-    elif application.status != ApplicationStatus.SENT:
+    if application.status != ApplicationStatus.SENT:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "Cannot update application with this status"
         )
 
-    elif update_status == ApplicationStatus.ADOPTED:
-        application.status = ApplicationStatus.ADOPTED
-        sending = await get_user_by_id(session, application.sending_id)
-        if application.type == ApplicationType.GROUP_JOIN:
-            sending.group_id = application.group_id
-            msg = f"Student @{sending.username} has been accepted into the group"
-        else:
-            sending.role = Role.ELDER
-            msg = f'Student @{sending.username} ({sending.full_name}) got the role of "Elder"'
-    else:
-        application.status = ApplicationStatus.REJECTED
-        msg = "The application was rejected"
+    match update_status:
+        case ApplicationStatus.ADOPTED:
+            application.status = ApplicationStatus.ADOPTED
+            sending = await get_user_by_id(session, application.sending_id)
+
+            if application.type == ApplicationType.GROUP_JOIN:
+                sending.group_id = application.group_id
+                msg = f"Student @{sending.username} has been accepted into the group"
+            else:
+                sending.role = Role.ELDER
+                msg = f'Student @{sending.username} ({sending.full_name}) got the role of "Elder"'
+
+        case ApplicationStatus.REJECTED:
+            application.status = ApplicationStatus.REJECTED
+            msg = "The application was rejected"
+
+        case _:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "Unsupported application status"
+            )
 
     await session.commit()
-
     return msg
+
