@@ -42,7 +42,7 @@ async def get_group_duties(
 
 
 @router.get("/attendants", response_model=List[BaseStudent])
-async def get_attendatns(
+async def get_attendants(
     group_id: Optional[int] = None,
     missed_students_id: List[int] = [],
     session: AsyncSession = Depends(get_session),
@@ -56,3 +56,13 @@ async def get_attendatns(
         session, current_user.id, group_id, missed_students_id
     )
     return attendants
+
+@router.get("/current_attendants")
+async def get_current_attendants(
+        group_id: Optional[int] = None,
+        session: AsyncSession = Depends(get_session),
+        current_user: User = Depends(get_current_user),
+):
+    group_id = await validate_group_access(current_user, group_id)
+    current_attendants = await qr.get_current_attendants(session, group_id)
+    return current_attendants

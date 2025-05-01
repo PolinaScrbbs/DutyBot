@@ -10,6 +10,7 @@ from aiogram.types import (
 duty_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Назначить дежурных")],
+        [KeyboardButton(text="Дежурные")],
         [
             KeyboardButton(text="Список дежурств"),
             KeyboardButton(text="Количество дежурств"),

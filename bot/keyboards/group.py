@@ -26,6 +26,7 @@ elder_main = ReplyKeyboardMarkup(
 
 student_main = ReplyKeyboardMarkup(
     keyboard=[
+        [KeyboardButton(text="Дежурные")],
         [
             KeyboardButton(text="Список дежурств"),
             KeyboardButton(text="Количество дежурств"),

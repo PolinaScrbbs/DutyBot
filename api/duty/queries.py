@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 from fastapi import HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -117,7 +117,6 @@ async def get_group_duties(
 async def get_group_attendants(
     session: AsyncSession, elder_id: int, group_id: int, missed_students_id: List[int]
 ) -> List[BaseStudent]:
-
     result = await session.execute(
         select(
             User.id,
@@ -127,9 +126,13 @@ async def get_group_attendants(
             func.max(Duty.date).label("last_duty_date"),
         )
         .outerjoin(Duty, Duty.attendant_id == User.id)
-        .where(User.id != elder_id, User.group_id == group_id)
-        .filter(User.id.notin_(missed_students_id))
-        .group_by(User.id)
+        .where(
+            User.group_id == group_id,
+            User.id != elder_id,
+            User.id.notin_(missed_students_id),
+        )
+        .group_by(User.id, User.username, User.full_name)
+        .order_by(User.full_name)
     )
 
     students = result.all()
@@ -144,4 +147,23 @@ async def get_group_attendants(
             full_name=student.full_name,
         )
         for student in bottom_students
+    ]
+
+async def get_current_attendants(session: AsyncSession, group_id: int):
+    result = await session.execute(
+        select(User.id, User.username, User.full_name)
+        .join(Duty, Duty.attendant_id == User.id)
+        .where(User.group_id == group_id)
+        .order_by(desc(Duty.date))
+        .limit(2)
+    )
+    current_attendants = result.all()
+
+    return [
+        BaseStudent(
+            id=student.id,
+            username=student.username,
+            full_name=student.full_name,
+        )
+        for student in current_attendants
     ]

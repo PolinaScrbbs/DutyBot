@@ -53,6 +53,20 @@ async def get_attendant(message: Message, state: FSMContext):
             )
 
 
+@router.message(lambda message: message.text == "Дежурные")
+async def get_current_attendant(message: Message, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+
+    status, attendants = await response.get_current_attendants(token)
+
+    if status == 200:
+        await message.answer(
+            f"**Текущие дежурные**:\n👷🏿{attendants[0]['full_name']}\n👷🏿{attendants[1]['full_name']}",
+            parse_mode="Markdown",
+        )
+
+
 @router.callback_query(lambda query: query.data.startswith("remap_"))
 async def remap(callback: CallbackQuery, state: FSMContext):
     remap_num = int(callback.data.split("_", 1)[1])

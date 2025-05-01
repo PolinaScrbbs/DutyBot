@@ -26,6 +26,13 @@ async def get_attendants(token: str, missed_student_id: List[int]) -> Tuple[int,
         ) as response:
             return response.status, await response.json()
 
+async def get_current_attendants(token: str) -> Tuple[int, dict]:
+    async with aiohttp.ClientSession(conf.api_url) as session:
+        async with session.get(
+            "/current_attendants",
+            headers={"Authorization": f"Bearer {token}"},
+        ) as response:
+            return response.status, await response.json()
 
 async def post_duty(token: str, students_id: List[int]) -> int:
     async with aiohttp.ClientSession(conf.api_url) as session:
