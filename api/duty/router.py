@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Depends, APIRouter, status, Response
+from fastapi import Depends, APIRouter, status, Response, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -31,13 +31,17 @@ async def post_duties(
 async def get_group_duties(
     group_id: Optional[int] = None,
     attendant_id: Optional[int] = None,
+    limit: int = Query(10, ge=1),
+    offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[DutyWithOutId]:
 
     await ut.user_group_exists(current_user)
     group_id = await validate_group_access(current_user, group_id)
-    duties = await qr.get_group_duties(session, current_user, group_id, attendant_id)
+    duties = await qr.get_group_duties(
+        session, current_user, group_id, attendant_id, limit, offset
+    )
     return duties
 
 
@@ -57,11 +61,12 @@ async def get_attendants(
     )
     return attendants
 
+
 @router.get("/current_attendants")
 async def get_current_attendants(
-        group_id: Optional[int] = None,
-        session: AsyncSession = Depends(get_session),
-        current_user: User = Depends(get_current_user),
+    group_id: Optional[int] = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     group_id = await validate_group_access(current_user, group_id)
     current_attendants = await qr.get_current_attendants(session, group_id)

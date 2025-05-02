@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship
 from ..applications.models import Base
 from .schemes import Student, DutyWithOutId
 
+
 class Duty(Base):
     __tablename__ = "duties"
 

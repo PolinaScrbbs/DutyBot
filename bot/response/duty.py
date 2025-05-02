@@ -1,14 +1,18 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import aiohttp
 
 from ..config import config as conf
 
 
-async def get_duties(token: str) -> Tuple[int, dict]:
+async def get_duties(
+    token: str, limit: int = 10, offset: int = 0
+) -> Tuple[int, Optional[dict]]:
+    params = {"limit": limit, "offset": offset}
+
     async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
-            "/duties", headers={"Authorization": f"Bearer {token}"}
+            "/duties", headers={"Authorization": f"Bearer {token}"}, params=params
         ) as response:
             status = response.status
             if status == 204:
@@ -26,6 +30,7 @@ async def get_attendants(token: str, missed_student_id: List[int]) -> Tuple[int,
         ) as response:
             return response.status, await response.json()
 
+
 async def get_current_attendants(token: str) -> Tuple[int, dict]:
     async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.get(
@@ -33,6 +38,7 @@ async def get_current_attendants(token: str) -> Tuple[int, dict]:
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
             return response.status, await response.json()
+
 
 async def post_duty(token: str, students_id: List[int]) -> int:
     async with aiohttp.ClientSession(conf.api_url) as session:

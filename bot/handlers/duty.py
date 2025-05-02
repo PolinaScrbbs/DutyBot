@@ -101,13 +101,31 @@ async def duty_list(message: Message, state: FSMContext):
     user_data = await state.get_data()
     token = user_data["token"]
 
-    status, duties = await response.get_duties(token)
+    offset = 0
+    limit = 10
+
+    status, duties = await response.get_duties(token, limit=limit, offset=offset)
 
     if status == 204:
         await message.answer("Список дежурств пуст", parse_mode="Markdown")
     else:
         msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
-        await message.answer(msg, parse_mode="Markdown")
+        await message.answer(
+            msg,
+            parse_mode="Markdown",
+            reply_markup=kb.get_pagination_kb("duties_pagination", offset),
+        )
+
+
+async def create_duties_msg(prefix: str, duties):
+    msg = prefix
+    for duty in duties:
+        msg += (
+            f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
+            f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
+            f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
+        )
+    return msg
 
 
 @router.message(lambda message: message.text == "Количество дежурств")
@@ -115,17 +133,107 @@ async def duty_count(message: Message, state: FSMContext):
     user_data = await state.get_data()
     token = user_data["token"]
 
-    status, duties_count = await response.get_duties(token)
+    limit = 10
+    offset = 0
+
+    status, duties_count = await response.get_duties(token, limit=limit, offset=offset)
 
     if status == 204:
         await message.answer("Список дежурств пуст", parse_mode="Markdown")
     else:
-        msg = "🧹*Количество дежурств:*\n\n"
-        for duty in duties_count:
-            msg += (
-                f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
-                f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
-                f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
-            )
+        msg = await create_duties_msg("🧹*Количество дежурств:*\n\n", duties_count)
+        await message.answer(
+            msg,
+            parse_mode="Markdown",
+            reply_markup=kb.get_pagination_kb("duties_count_pagination", offset),
+        )
 
-        await message.answer(msg, parse_mode="Markdown")
+
+@router.callback_query(F.data.startswith("duties_pagination:"))
+async def duties_pagination(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+
+    if callback.data == "duties_pagination:close":
+        await callback.message.delete()
+        await callback.answer()
+
+        await callback.message.bot.send_message(
+            callback.message.chat.id, "✅ Закрыто", reply_markup=kb.duty_menu
+        )
+        return
+
+    _, action, offset_str = callback.data.split(":")
+    offset = int(offset_str)
+    limit = 10
+
+    if action == "next":
+        offset += limit
+    elif action == "prev":
+        if offset == 0:
+            await callback.answer(
+                "Вы на первой странице, назад уже не пойти.", show_alert=True
+            )
+            return
+        offset = max(0, offset - limit)
+
+    status, duties = await response.get_duties(token, limit=limit, offset=offset)
+
+    if status == 204 or not duties:
+        await callback.answer("Дежурств больше нет", show_alert=True)
+        return
+
+    msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
+
+    await callback.message.edit_text(
+        msg,
+        parse_mode="Markdown",
+        reply_markup=kb.get_pagination_kb("duties_pagination", offset),
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("duties_count_pagination:"))
+async def handle_duties_pagination(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+
+    if callback.data == "duties_count_pagination:close":
+        await callback.message.delete()
+        await callback.answer()
+
+        await callback.message.bot.send_message(
+            callback.message.chat.id, "✅ Закрыто", reply_markup=kb.duty_menu
+        )
+        return
+
+    _, action, offset_str = callback.data.split(":")
+    offset = int(offset_str)
+    limit = 10
+
+    if action == "next":
+        offset += limit
+    elif action == "prev":
+        if offset == 0:
+            await callback.answer(
+                "Вы на первой странице, назад уже не пойти.", show_alert=True
+            )
+            return
+        offset = max(0, offset - limit)
+
+    status, duties_count = await response.get_duties(token, limit=limit, offset=offset)
+
+    if status == 204 or not duties_count:
+        await callback.answer("Дежурств больше нет", show_alert=True)
+        return
+
+    msg = await create_duties_msg("🧹*Количество дежурств:*\n\n", duties_count)
+
+    await callback.message.edit_text(
+        msg,
+        parse_mode="Markdown",
+        reply_markup=kb.get_pagination_kb("duties_count_pagination", offset),
+    )
+
+    await callback.answer()

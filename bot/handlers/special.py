@@ -5,7 +5,8 @@ from aiogram.fsm.context import FSMContext
 
 from .. import response
 from .. import keyboards as kb
-#from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+
+# from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 from ..config import config as conf
 
@@ -19,7 +20,9 @@ async def cmd_start(message: Message, state: FSMContext):
     token = user_data.get("token", None)
 
     if token:
-        msg = f"С возвращением, @{message.from_user.username}👋 \nВыбери пункт из меню🔍"
+        msg = (
+            f"С возвращением, @{message.from_user.username}👋 \nВыбери пункт из меню🔍"
+        )
 
         status, user = await response.get_user_by_username(
             message.from_user.username, token
@@ -60,7 +63,6 @@ async def cmd_start(message: Message, state: FSMContext):
         keyboard = kb.start
 
     await message.answer(text=msg, parse_mode="Markdown", reply_markup=keyboard)
-
 
 
 # @router.message(Command("profile"))

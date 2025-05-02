@@ -63,4 +63,3 @@ async def get_user_avatar(bot: Bot, user_id: int) -> Optional[str]:
                     return path
 
     return None
-

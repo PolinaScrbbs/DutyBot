@@ -42,6 +42,7 @@ student_main = ReplyKeyboardMarkup(
     input_field_placeholder="Выберите пункт меню",
 )
 
+
 async def group_menu(application_count: Optional[int]):
     group_menu = InlineKeyboardMarkup(
         inline_keyboard=[

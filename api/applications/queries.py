@@ -192,4 +192,3 @@ async def update_application(
 
     await session.commit()
     return msg
-

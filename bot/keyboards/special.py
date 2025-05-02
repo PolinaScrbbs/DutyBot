@@ -23,3 +23,19 @@ start = ReplyKeyboardMarkup(
 cancel = InlineKeyboardMarkup(
     inline_keyboard=[[InlineKeyboardButton(text="❌", callback_data="cancel")]]
 )
+
+
+def get_pagination_kb(tag: str, offset: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="◀ Назад", callback_data=f"{tag}:prev:{offset}"
+                ),
+                InlineKeyboardButton(
+                    text="Вперёд ▶", callback_data=f"{tag}:next:{offset}"
+                ),
+            ],
+            [InlineKeyboardButton(text="❌ Закрыть", callback_data=f"{tag}:close")],
+        ]
+    )

@@ -52,6 +52,8 @@ async def get_users_data(
     current_user: User,
     group_id: Optional[int],
     attendant_id: Optional[int] = None,
+    limit: int = 10,
+    offset: int = 0,
 ) -> List[Tuple[User, List[Duty]]]:
     await duty_protection(current_user, group_id)
 
@@ -69,9 +71,11 @@ async def get_users_data(
 
     query = query.options(selectinload(User.duties))
 
-    result = await session.execute(query)
+    query = query.limit(limit).offset(offset)
 
+    result = await session.execute(query)
     users = result.scalars().all()
+
     return [(user, user.duties) for user in users]
 
 
@@ -80,14 +84,17 @@ async def get_group_duties(
     current_user: User,
     group_id: Optional[int] = None,
     attendant_id: Optional[int] = None,
+    limit: int = 10,
+    offset: int = 0,
 ) -> List[DutyWithOutId]:
 
     if group_id is None:
         group_id = current_user.group_id
 
     attendants_data = await get_users_data(
-        session, current_user, group_id, attendant_id
+        session, current_user, group_id, attendant_id, limit, offset
     )
+
     duties_with_out_id = []
 
     for user, duties in attendants_data:
@@ -108,7 +115,7 @@ async def get_group_duties(
                 DutyWithOutId(attendant=attendant, date=formatted_date)
             )
 
-    if duties_with_out_id == []:
+    if not duties_with_out_id:
         raise HTTPException(status.HTTP_204_NO_CONTENT)
 
     return duties_with_out_id
@@ -148,6 +155,7 @@ async def get_group_attendants(
         )
         for student in bottom_students
     ]
+
 
 async def get_current_attendants(session: AsyncSession, group_id: int):
     result = await session.execute(
