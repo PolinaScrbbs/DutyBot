@@ -11,7 +11,9 @@ load_dotenv()
 API_URL = os.getenv("API_URL")
 
 
-async def no_content_response(response: aiohttp.ClientResponse) -> Tuple[int, Optional[dict]]:
+async def no_content_response(
+    response: aiohttp.ClientResponse,
+) -> Tuple[int, Optional[dict]]:
     status = response.status
     if status == 204:
         return status, None

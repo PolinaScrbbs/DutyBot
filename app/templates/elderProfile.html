@@ -2,16 +2,6 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<div class="profile__info">
-    <img class="profile__img" src="{{ user.avatar_url }}" alt="profileImg">
-    <div class="profile__nickname">🦸🏼‍♀️{{user.username}}</div>
-    <div class="profile__nickname">{{user.role}}</div>
-    <div class="profile__name">{{user.full_name}}</div>
-    <div class="profile__date">
-        {{user.created_at}}
-    </div>
-</div>
-
 {% if not user.group_id %}
     <div class="profile__nickname">В группе не состоит</div>
 {% else %}

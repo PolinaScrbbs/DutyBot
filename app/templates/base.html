@@ -9,6 +9,14 @@
 </head>
 <body>
     <div class="profile">
+		<div class="profile__info">
+			<img class="profile__img" src="{{ user.avatar_url }}" alt="profileImg">
+			<div class="profile__nickname"><span title="{{ user.role }}">{{emoji}}</span>{{user.username}}</div>
+			<div class="profile__name">{{user.full_name}}</div>
+			<div class="profile__date">
+				{{user.created_at}}
+			</div>
+		</div>
         {% block content %}
         {% endblock %}
         <div class="profile__creator">

@@ -25,13 +25,20 @@ async def profile():
 
     status, user = await get_user(username, token)
 
-    locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+    locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
     created_at = user["created_at"]
     date_object = datetime.fromisoformat(created_at)
     user["created_at"] = date_object.strftime("%d %B %Yг.")
 
+    emojis = {
+        "Студент": "👨‍🎓",
+        "Староста": "👨‍🏫",
+        "Администратор": "👨‍💼",
+    }
+
     context = {
         "user": user,
+        "emoji": emojis.get(user["role"], "👤"),
     }
 
     if user["group_id"]:
@@ -58,7 +65,9 @@ async def profile():
                 created_at = group["created_at"]
                 date_object = datetime.fromisoformat(created_at)
                 group["created_at"] = date_object.strftime("%d %B %Yг.")
-                group["creator"] = await formatted_full_name(group["creator"]["full_name"])
+                group["creator"] = await formatted_full_name(
+                    group["creator"]["full_name"]
+                )
                 groups_list.append(group)
             context["groups"] = groups_list
 
