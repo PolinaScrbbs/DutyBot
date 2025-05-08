@@ -1,11 +1,14 @@
 import sys
 import os
-from typing import Tuple
+from typing import Tuple, Optional
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import aiohttp
-from config import API_URL
+from dotenv import load_dotenv
+
+load_dotenv()
+API_URL = os.getenv("API_URL")
 
 
 async def get_user(username: str, token: str) -> Tuple[int, dict]:
@@ -42,9 +45,13 @@ async def get_students(token: str) -> Tuple[int, dict]:
             return response.status, await response.json()
 
 
-async def get_duties(token: str) -> Tuple[int, dict]:
+async def get_duties(token: str) -> Tuple[int, Optional[dict]]:
     async with aiohttp.ClientSession(API_URL) as session:
         async with session.get(
             "/duties", headers={"Authorization": f"Bearer {token}"}
         ) as response:
-            return response.status, await response.json()
+            status = response.status
+            if status == 204:
+                return status, None
+            else:
+                return status, await response.json()

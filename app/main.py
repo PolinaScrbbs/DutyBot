@@ -1,12 +1,11 @@
 import locale
 from datetime import datetime
 import os
-
 import roman
 from quart import Quart, render_template, request, send_from_directory
 
-from response import get_user, get_groups, get_group, get_students, get_duties
-from utils import formatted_full_name
+from .response import get_user, get_groups, get_group, get_students, get_duties
+from .utils import formatted_full_name
 
 app = Quart(
     __name__,
@@ -14,7 +13,9 @@ app = Quart(
     static_url_path="/static",
     static_folder="static",
 )
-MEDIA_FOLDER = os.path.join(app.root_path, "media")
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEDIA_FOLDER = os.path.join(BASE_DIR, "media")
 
 
 @app.route("/profile")
@@ -72,6 +73,7 @@ async def profile():
 
 @app.route("/media/<path:filename>")
 async def media(filename):
+    print(MEDIA_FOLDER)
     return await send_from_directory(MEDIA_FOLDER, filename)
 
 

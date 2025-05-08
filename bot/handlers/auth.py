@@ -49,20 +49,20 @@ async def registration(message: Message, state: FSMContext):
     await state.clear()
     if status == 201:
         await message.answer(
-            f"✅ *Пользователь зарегестрирован*", "Markdown", reply_markup=kb.start
+            f"✅ *Пользователь зарегистрирован*", "Markdown", reply_markup=kb.start
         )
     else:
         await message.answer(f"❌ *{json_response['detail'].upper()}*", "Markdown")
 
 
 @router.message(lambda message: message.text == "Авторизация")
-async def authorazition_start(message: Message, state: FSMContext):
+async def authorization_start(message: Message, state: FSMContext):
     await state.set_state(st.Authorization.password)
     await message.answer("🔑Введите пароль", reply_markup=kb.cancel)
 
 
 @router.message(st.Authorization.password)
-async def authorazation(message: Message, state: FSMContext):
+async def authorization(message: Message, state: FSMContext):
     username = message.from_user.username
     password = str(message.text)
 
