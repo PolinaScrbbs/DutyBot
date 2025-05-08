@@ -25,7 +25,7 @@ async def profile():
 
     status, user = await get_user(username, token)
 
-    locale.setlocale(locale.LC_TIME, "Russian")
+    locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
     created_at = user["created_at"]
     date_object = datetime.fromisoformat(created_at)
     user["created_at"] = date_object.strftime("%d %B %Yг.")
@@ -52,15 +52,15 @@ async def profile():
 
     elif user["role"] == "Администратор":
         status, groups = await get_groups(token)
-        context["groups"] = groups
         groups_list = []
-        for group in groups:
-            created_at = group["created_at"]
-            date_object = datetime.fromisoformat(created_at)
-            group["created_at"] = date_object.strftime("%d %B %Yг.")
-            group["creator"] = await formatted_full_name(group["creator"]["full_name"])
-            groups_list.append(group)
-        groups = groups_list
+        if groups:
+            for group in groups:
+                created_at = group["created_at"]
+                date_object = datetime.fromisoformat(created_at)
+                group["created_at"] = date_object.strftime("%d %B %Yг.")
+                group["creator"] = await formatted_full_name(group["creator"]["full_name"])
+                groups_list.append(group)
+            context["groups"] = groups_list
 
     templates = {
         "Администратор": "adminProfile.html",
@@ -68,7 +68,10 @@ async def profile():
         "Студент": "studentProfile.html",
     }
 
-    return await render_template(templates[user["role"]], **context)
+    template = templates.get(user["role"])
+    if not template:
+        return "Unknown role", 400
+    return await render_template(template, **context)
 
 
 @app.route("/media/<path:filename>")
