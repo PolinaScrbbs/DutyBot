@@ -58,7 +58,7 @@ async def post_group(
     group_data: GroupForm,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> Response:
+) -> GroupResponse:
     await ut.elder_admin_check(current_user)
 
     if current_user.group_id is not None:

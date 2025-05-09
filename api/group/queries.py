@@ -13,10 +13,9 @@ from ..duty.schemes import BaseDuty
 
 from .models import Group, Specialization
 from .schemes import (
-    BaseGroup,
     GroupInDB,
     Student,
-    StudentWithDuties,
+    StudentWithDuties, GroupForm,
 )
 from .utils import check_empty_groups, check_group_exists
 
@@ -43,7 +42,7 @@ async def get_groups_list(
 
 
 async def create_group(
-    session: AsyncSession, group_create: BaseGroup, creator_id: int
+    session: AsyncSession, group_create: GroupForm, creator_id: int
 ) -> Group:
 
     group = Group(
@@ -53,10 +52,11 @@ async def create_group(
         creator_id=creator_id,
     )
 
-    user = await get_user_by_id(session, creator_id)
-
     session.add(group)
-    user.group_id = creator_id
+    await session.flush()
+
+    user = await get_user_by_id(session, creator_id)
+    user.group_id = group.id
 
     await session.commit()
     await session.refresh(group)

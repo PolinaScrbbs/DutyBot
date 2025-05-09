@@ -45,6 +45,7 @@ body {
   -ms-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
+  zoom: 80%;
 }
 
 input,
@@ -268,7 +269,7 @@ tr:last-child td:last-child {
 }
 
 .wrapper {
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     padding-bottom: 15px;
