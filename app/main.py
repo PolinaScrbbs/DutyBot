@@ -23,7 +23,28 @@ async def profile():
     username = request.args.get("username")
     token = request.args.get("token")
 
-    status, user = await get_user(username, token)
+    if not token or not username:
+        # Заглушечный пользователь
+        user = {
+            "username": "guest",
+            "full_name": "Иванов Иван Иванович",
+            "role": "Студент",
+            "created_at": datetime.now().isoformat(),
+            "group_id": None,
+            "avatar_url": "media\\avatars\\default.jpg"
+        }
+    else:
+        status, user = await get_user(username, token)
+        if not status or not user:
+            # Если токен недействителен или пользователь не найден
+            user = {
+                "username": "guest",
+                "full_name": "Иванов Иван Иванович",
+                "role": "Студент",
+                "created_at": datetime.now().isoformat(),
+                "group_id": None,
+                "avatar_url": "media\\avatars\\default.jpg"
+            }
 
     locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
     created_at = user["created_at"]
@@ -42,34 +63,46 @@ async def profile():
     }
 
     if user["group_id"]:
-        status, group = await get_group(token)
-        group["course_number_roman"] = roman.toRoman(group["course_number"])
-        created_at = group["created_at"]
-        date_object = datetime.fromisoformat(created_at)
-        group["created_at"] = date_object.strftime("%d %B %Yг.")
-        context["group"] = group
+        try:
+            status, group = await get_group(token)
+            group["course_number_roman"] = roman.toRoman(group["course_number"])
+            created_at = group["created_at"]
+            date_object = datetime.fromisoformat(created_at)
+            group["created_at"] = date_object.strftime("%d %B %Yг.")
+            context["group"] = group
+        except Exception:
+            pass
 
     if user["role"] == "Студент":
-        status, duties = await get_duties(token)
-        context["duties"] = duties
+        try:
+            status, duties = await get_duties(token)
+            context["duties"] = duties
+        except Exception:
+            context["duties"] = []
 
     elif user["role"] == "Староста":
-        status, students = await get_students(token)
-        context["students"] = students
+        try:
+            status, students = await get_students(token)
+            context["students"] = students
+        except Exception:
+            context["students"] = []
 
     elif user["role"] == "Администратор":
-        status, groups = await get_groups(token)
-        groups_list = []
-        if groups:
-            for group in groups:
-                created_at = group["created_at"]
-                date_object = datetime.fromisoformat(created_at)
-                group["created_at"] = date_object.strftime("%d %B %Yг.")
-                group["creator"] = await formatted_full_name(
-                    group["creator"]["full_name"]
-                )
-                groups_list.append(group)
-            context["groups"] = groups_list
+        try:
+            status, groups = await get_groups(token)
+            groups_list = []
+            if groups:
+                for group in groups:
+                    created_at = group["created_at"]
+                    date_object = datetime.fromisoformat(created_at)
+                    group["created_at"] = date_object.strftime("%d %B %Yг.")
+                    group["creator"] = await formatted_full_name(
+                        group["creator"]["full_name"]
+                    )
+                    groups_list.append(group)
+                context["groups"] = groups_list
+        except Exception:
+            context["groups"] = []
 
     templates = {
         "Администратор": "adminProfile.html",
@@ -81,6 +114,7 @@ async def profile():
     if not template:
         return "Unknown role", 400
     return await render_template(template, **context)
+
 
 
 @app.route("/media/<path:filename>")
