@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
-from sqlalchemy import exists, func
+from sqlalchemy import exists, func, update, delete
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import NoResultFound
@@ -89,6 +89,25 @@ async def update_group(
     await session.refresh(group)
 
     return group
+
+
+async def delete_group(session: AsyncSession, creator_id: int) -> None:
+    result = await session.execute(select(Group).where(Group.creator_id == creator_id))
+    group = result.scalar_one_or_none()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Группа не найдена")
+
+    group_id = group.id
+
+    await session.execute(
+        update(User).where(User.group_id == group_id).values(group_id=None)
+    )
+
+    await session.execute(delete(Application).where(Application.group_id == group_id))
+
+    await session.delete(group)
+    await session.commit()
 
 
 async def get_group_by_id(session: AsyncSession, id: int) -> Group:

@@ -95,6 +95,17 @@ async def patch_group(
     return {"detail": "Группа обновлена", "group": update_data}
 
 
+@router.delete("/group")
+async def delete_group(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    await elder_check(current_user)
+    await qr.delete_group(session, current_user.id)
+
+    return {"detail": "Группа успешно удалена"}
+
+
 @router.get("/group/@{group_title}", response_model=GroupInDB)
 async def get_group_by_title(
     group_title: str,
