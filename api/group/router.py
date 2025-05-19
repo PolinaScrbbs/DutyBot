@@ -12,7 +12,7 @@ from .models import Specialization
 from .schemes import GroupInDB, GroupUpdate, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .utils import validate_group_access
-from .validators import GroupValidator
+from .validators import GroupValidator, GroupUpdateValidator
 from ..user.utils import elder_check
 
 router = APIRouter()
@@ -90,6 +90,16 @@ async def patch_group(
     current_user: User = Depends(get_current_user),
 ):
     await elder_check(current_user)
+
+    validator = GroupUpdateValidator(
+        updated_group.title,
+        updated_group.specialization,
+        updated_group.course_number,
+        [spec.value for spec in Specialization],
+        session,
+    )
+    await validator.validate()
+
     update_data = await qr.update_group(session, current_user.id, updated_group)
 
     return {"detail": "Группа обновлена", "group": update_data}
