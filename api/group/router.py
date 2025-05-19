@@ -1,6 +1,5 @@
 from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
-from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
@@ -10,10 +9,11 @@ from ..user import utils as ut
 from ..applications.models import ApplicationStatus
 
 from .models import Specialization
-from .schemes import GroupInDB, GroupResponse, GroupForm, StudentWithDuties
+from .schemes import GroupInDB, GroupUpdate, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .utils import validate_group_access
 from .validators import GroupValidator
+from ..user.utils import elder_check
 
 router = APIRouter()
 
@@ -81,6 +81,18 @@ async def post_group(
     msg = f"The group {group.title} was created"
 
     return GroupResponse(message=msg, group=pydantic_group)
+
+
+@router.patch("/group")
+async def patch_group(
+    updated_group: GroupUpdate = Depends(GroupUpdate),
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    await elder_check(current_user)
+    update_data = await qr.update_group(session, current_user.id, updated_group)
+
+    return {"detail": "Группа обновлена", "group": update_data}
 
 
 @router.get("/group/@{group_title}", response_model=GroupInDB)

@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import exists, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..user.models import User, Role
@@ -14,8 +15,10 @@ from ..duty.schemes import BaseDuty
 from .models import Group, Specialization
 from .schemes import (
     GroupInDB,
+    GroupUpdate,
     Student,
-    StudentWithDuties, GroupForm,
+    StudentWithDuties,
+    GroupForm,
 )
 from .utils import check_empty_groups, check_group_exists
 
@@ -60,6 +63,31 @@ async def create_group(
 
     await session.commit()
     await session.refresh(group)
+    return group
+
+
+async def get_group_by_creator_id(session: AsyncSession, creator_id: int) -> Group:
+    try:
+        result = await session.execute(
+            select(Group).where(Group.creator_id == creator_id)
+        )
+        group = result.scalar_one()
+        return group
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="Группа не найдена")
+
+
+async def update_group(
+    session: AsyncSession, creator_id: int, update_form: GroupUpdate
+) -> Group:
+    group = await get_group_by_creator_id(session, creator_id)
+    update_data = update_form.model_dump(exclude_none=True)
+    for key, value in update_data.items():
+        setattr(group, key, value)
+
+    await session.commit()
+    await session.refresh(group)
+
     return group
 
 

@@ -17,6 +17,12 @@ class GroupForm(BaseModel):
     course_number: int
 
 
+class GroupUpdate(BaseModel):
+    title: Optional[str] = None
+    specialization: Optional[str] = None
+    course_number: Optional[int] = None
+
+
 class GroupFormsInfo(GroupForm, NullGroup):
     pass
 
