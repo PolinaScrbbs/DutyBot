@@ -16,6 +16,7 @@ class GroupForm(BaseModel):
     specialization: str
     course_number: int
 
+
 class GroupUpdate(BaseModel):
     title: Optional[str] = None
     specialization: Optional[str] = None

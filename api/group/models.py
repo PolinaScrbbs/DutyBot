@@ -86,4 +86,4 @@ class Group(Base):
 
 class GetGroupFilters(BaseModel):
     course_number: Optional[int] = None
-    specialization: Optional[Specialization] = Specialization.INFORMATION_SYSTEMS_SPECIALIST
+    specialization: Optional[Specialization] = None

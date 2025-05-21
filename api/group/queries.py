@@ -13,13 +13,7 @@ from ..duty.models import Duty
 from ..duty.schemes import BaseDuty
 
 from .models import Group, Specialization, GetGroupFilters
-from .schemes import (
-    GroupInDB,
-    GroupUpdate,
-    Student,
-    StudentWithDuties,
-    GroupForm
-)
+from .schemes import GroupInDB, GroupUpdate, Student, StudentWithDuties, GroupForm
 from .utils import check_empty_groups, check_group_exists
 
 
@@ -147,15 +141,19 @@ async def get_group_without_user_application(
     limit: int = 10,
     filters: Optional[GetGroupFilters] = None,
 ) -> Sequence[Group]:
-    stmt = select(Group).options(
-        selectinload(Group.creator),
-        selectinload(Group.students),
-    ).where(
-        ~exists(
-            select(Application.id).where(
-                Application.type == ApplicationType.GROUP_JOIN,
-                Application.sending_id == user_id,
-                Application.group_id == Group.id,
+    stmt = (
+        select(Group)
+        .options(
+            selectinload(Group.creator),
+            selectinload(Group.students),
+        )
+        .where(
+            ~exists(
+                select(Application.id).where(
+                    Application.type == ApplicationType.GROUP_JOIN,
+                    Application.sending_id == user_id,
+                    Application.group_id == Group.id,
+                )
             )
         )
     )
