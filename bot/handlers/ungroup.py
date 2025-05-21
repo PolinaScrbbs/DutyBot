@@ -1,3 +1,4 @@
+from aiogram import F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -16,7 +17,7 @@ async def group_create(message: Message, state: FSMContext):
 
     if not token:
         await message.answer(
-            "Токен не найден, зарегестрируйтесь или пройдите авторизацию",
+            "Токен не найден, зарегистрируйтесь или пройдите авторизацию",
             reply_markup=kb.ungroup_main,
         )
         return
@@ -114,14 +115,14 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
 async def group_join(message: Message, state: FSMContext):
     user_data = await state.get_data()
     status, groups = await response.get_groups(
-        without_application=True, token=user_data["token"]
+        without_application=True, token=user_data["token"], limit=10, offset=0
     )
 
     if groups:
         await message.answer(
             "Выберите группу",
             parse_mode="Markdown",
-            reply_markup=await kb.inline_groups(groups),
+            reply_markup=await kb.inline_groups(groups, offset=0),
         )
     else:
         await message.answer(
@@ -155,3 +156,46 @@ async def elder_application(message: Message, state: FSMContext):
 
     else:
         await message.answer(f"❌ {json_response['detail']}")
+
+
+@router.callback_query(F.data.startswith("groups_pagination:"))
+async def groups_pagination(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = user_data["token"]
+
+    if callback.data == "groups_pagination:close":
+        await callback.message.delete()
+        await callback.answer()
+
+        await callback.message.bot.send_message(
+            callback.message.chat.id, "✅ Закрыто", reply_markup=kb.ungroup_main
+        )
+        return
+
+    _, action, offset_str = callback.data.split(":")
+    offset = int(offset_str)
+    limit = 10
+
+    if action == "next":
+        offset += limit
+    elif action == "prev":
+        if offset == 0:
+            await callback.answer("Вы на первой странице.", show_alert=True)
+            return
+        offset = max(0, offset - limit)
+
+    status, groups = await response.get_groups(
+        without_application=True, token=token, limit=limit, offset=offset
+    )
+
+    if status == 204 or not groups:
+        await callback.answer("Групп больше нет", show_alert=True)
+        return
+
+    await callback.message.edit_text(
+        "Выберите группу",
+        parse_mode="Markdown",
+        reply_markup=await kb.inline_groups(groups, offset=offset),
+    )
+
+    await callback.answer()

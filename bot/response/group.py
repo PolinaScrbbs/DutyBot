@@ -29,11 +29,11 @@ async def post_group(title: str, specialization: str, course_number: int, token:
 
 
 async def get_groups(
-    skip: int = 0, limit: int = 10, without_application: bool = False, token=str
+    offset: int = 0, limit: int = 10, without_application: bool = False, token=str
 ) -> Tuple[int, list]:
 
     params = {
-        "skip": skip,
+        "skip": offset,
         "limit": limit,
         "without_application": str(without_application),
     }

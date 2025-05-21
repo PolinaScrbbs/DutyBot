@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +8,7 @@ from ..user.models import User, Role
 from ..user import utils as ut
 from ..applications.models import ApplicationStatus
 
-from .models import Specialization
+from .models import Specialization, Group
 from .schemes import GroupInDB, GroupUpdate, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .utils import validate_group_access
@@ -33,11 +33,11 @@ async def get_groups(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
     without_application: bool = False,
-) -> List[GroupInDB]:
+):
     if current_user.role != Role.ADMIN:
         if without_application:
             groups = await qr.get_group_without_user_application(
-                session, current_user.id
+                session, current_user.id, skip, limit
             )
             return groups
         else:

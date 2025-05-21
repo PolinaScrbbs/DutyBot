@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from fastapi import HTTPException, status
 from sqlalchemy import exists, func, update, delete
 from sqlalchemy.future import select
@@ -135,9 +135,8 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
 
 
 async def get_group_without_user_application(
-    session: AsyncSession, user_id: int
-) -> List[GroupInDB]:
-
+    session: AsyncSession, user_id: int, skip: int = 0, limit: int = 10
+) -> Sequence[Group]:
     result = await session.execute(
         select(Group)
         .options(selectinload(Group.creator), selectinload(Group.students))
@@ -150,6 +149,8 @@ async def get_group_without_user_application(
                 )
             )
         )
+        .offset(skip)
+        .limit(limit)
     )
 
     groups = result.scalars().all()
