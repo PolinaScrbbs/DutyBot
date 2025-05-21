@@ -8,6 +8,7 @@ from .ungroup import router
 
 from .. import response
 from .. import keyboards as kb
+from ..utils import get_user_token
 
 
 @router.message(lambda message: message.text == "Группа")
@@ -18,43 +19,50 @@ async def group_menu(message: Message, state: FSMContext):
         "params": {"message": message, "state": state},
     }
 
-    token = user_data["token"]
-    user = user_data["user"]
+    token = await get_user_token(message, user_data)
 
-    status, group = await response.get_group(token)
-    user_data["group"] = group
-    await state.update_data(user_data)
+    if token:
+        status, group = await response.get_group(token)
 
-    status, applications = await response.get_applications(
-        token=token, application_type="На вступление в группу", group_id=group["id"]
-    )
+        if status != 200:
+            await message.answer("Вы не состоите в группе")
+        else:
+            user_data["group"] = group
+            await state.update_data(user_data)
 
-    applications_count = 0
-    if status == 200:
-        applications_count = len(applications)
+            status, applications = await response.get_applications(
+                token=token,
+                application_type="На вступление в группу",
+                group_id=group["id"],
+            )
 
-    await message.answer(
-        f"*{group['title'].upper()}*",
-        parse_mode="Markdown",
-        reply_markup=await kb.group_menu(applications_count),
-    )
+            applications_count = 0
+            if status == 200:
+                applications_count = len(applications)
+
+            await message.answer(
+                f"*{group['title'].upper()}*",
+                parse_mode="Markdown",
+                reply_markup=await kb.group_menu(applications_count),
+            )
 
 
 @router.callback_query(F.data == "students")
 async def students(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
-    token = user_data["token"]
+    token = await get_user_token(callback, user_data)
 
-    status, students = await response.get_students(token)
+    if token:
+        status, students_list = await response.get_students(token)
 
-    if status == 204:
-        await callback.message.edit_text("Список студентов пуст")
-    else:
-        await callback.message.edit_text(
-            "*Студенты*",
-            parse_mode="Markdown",
-            reply_markup=await kb.inline_students(students),
-        )
+        if status == 204:
+            await callback.message.edit_text("Список студентов пуст")
+        else:
+            await callback.message.edit_text(
+                "*Студенты*",
+                parse_mode="Markdown",
+                reply_markup=await kb.inline_students(students_list),
+            )
 
 
 @router.callback_query(lambda query: query.data.startswith("st_"))
@@ -63,16 +71,19 @@ async def student(callback: CallbackQuery, state: FSMContext):
     student_username = callback.data.split("_", 1)[1]
 
     user_data = await state.get_data()
-    token = user_data["token"]
+    token = await get_user_token(callback, user_data)
 
-    status, student = await response.get_user_by_username(student_username, token)
-    student_first_name, student_last_name = student["full_name"].split()[:2]
+    if token:
+        status, student_dict = await response.get_user_by_username(
+            student_username, token
+        )
+        student_first_name, student_last_name = student_dict["full_name"].split()[:2]
 
-    await callback.message.edit_text(
-        f"*@{student['username']}*\n{student_first_name} {student_last_name}",
-        parse_mode="Markdown",
-        reply_markup=await kb.inline_student(student),
-    )
+        await callback.message.edit_text(
+            f"*@{student_dict['username']}*\n{student_first_name} {student_last_name}",
+            parse_mode="Markdown",
+            reply_markup=await kb.inline_student(student_dict),
+        )
 
 
 @router.callback_query(lambda query: query.data.startswith("kick_"))
@@ -81,13 +92,14 @@ async def student_kick(callback: CallbackQuery, state: FSMContext):
     student_id = int(student_fields[1])
 
     user_data = await state.get_data()
-    token = user_data["token"]
+    token = await get_user_token(callback, user_data)
 
-    await response.kick_student(student_id, token)
+    if token:
+        await response.kick_student(student_id, token)
 
-    await callback.message.edit_text(
-        "✅ Пользователь удалён из группы.\nЕго история дежурств очищена",
-    )
+        await callback.message.edit_text(
+            "✅ Пользователь удалён из группы.\nЕго история дежурств очищена",
+        )
 
-    await asyncio.sleep(3)
-    await students(callback, state)
+        await asyncio.sleep(3)
+        await students(callback, state)

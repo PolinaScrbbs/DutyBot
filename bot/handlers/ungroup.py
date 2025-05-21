@@ -13,38 +13,32 @@ from .. import utils as ut
 @router.message(lambda message: message.text == "Создать группу")
 async def group_create(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    token = await ut.get_user_token(user_data)
+    token = await ut.get_user_token(message, user_data)
 
-    if not token:
-        await message.answer(
-            "Токен не найден, зарегистрируйтесь или пройдите авторизацию",
-            reply_markup=kb.ungroup_main,
+    if token:
+        status, user = await response.get_user_by_username(
+            message.from_user.username, token
         )
-        return
 
-    status, user = await response.get_user_by_username(
-        message.from_user.username, token
-    )
+        user_data["user_id"] = user["id"]
+        await state.update_data(user_data)
 
-    user_data["user_id"] = user["id"]
-    await state.update_data(user_data)
+        if user["role"] != "Староста":
+            await message.answer(
+                f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время',
+                reply_markup=kb.ungroup_main,
+            )
+            return
 
-    if user["role"] != "Староста":
-        await message.answer(
-            f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время',
-            reply_markup=kb.ungroup_main,
-        )
-        return
+        elif user["group_id"] is not None:
+            await message.answer(
+                f'"Староста" может создать только 1 группу',
+                reply_markup=kb.ungroup_main,
+            )
+            return
 
-    elif user["group_id"] is not None:
-        await message.answer(
-            f'"Староста" может создать только 1 группу',
-            reply_markup=kb.ungroup_main,
-        )
-        return
-
-    await message.answer(f"Введите название группы (Не номер)")
-    await state.set_state(st.GroupCreate.title)
+        await message.answer(f"Введите название группы (Не номер)")
+        await state.set_state(st.GroupCreate.title)
 
 
 @router.message(st.GroupCreate.title)
@@ -55,7 +49,7 @@ async def group_title(message: Message, state: FSMContext):
     user_data["title"] = title
     await state.update_data(user_data)
 
-    token = await ut.get_user_token(user_data)
+    token = await ut.get_user_token(message, user_data)
     status, specializations = await response.get_specializations(token)
 
     await message.answer(
@@ -94,21 +88,21 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
         f"Вы выбрали *{course_number} курс*", parse_mode="Markdown"
     )
 
-    token = await ut.get_user_token(user_data)
-
-    status, json_response = await response.post_group(
-        title, specialization, course_number, token
-    )
-
-    await ut.clear_user_data(state, token, user_data["user"])
-    if status == 201:
-        await callback.message.answer(
-            f"Группа {title} создана", reply_markup=kb.elder_main
+    token = await ut.get_user_token(callback, user_data)
+    if token:
+        status, json_response = await response.post_group(
+            title, specialization, course_number, token
         )
-    else:
-        await callback.message.answer(
-            f"❌ *{json_response['detail'].upper()}*", "Markdown"
-        )
+
+        await ut.clear_user_data(state, token, user_data["user"])
+        if status == 201:
+            await callback.message.answer(
+                f"Группа {title} создана", reply_markup=kb.elder_main
+            )
+        else:
+            await callback.message.answer(
+                f"❌ *{json_response['detail'].upper()}*", "Markdown"
+            )
 
 
 @router.message(lambda message: message.text == "Вступить в группу")
@@ -161,41 +155,41 @@ async def elder_application(message: Message, state: FSMContext):
 @router.callback_query(F.data.startswith("groups_pagination:"))
 async def groups_pagination(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
-    token = user_data["token"]
+    token = await ut.get_user_token(callback, user_data)
+    if token:
+        if callback.data == "groups_pagination:close":
+            await callback.message.delete()
+            await callback.answer()
 
-    if callback.data == "groups_pagination:close":
-        await callback.message.delete()
-        await callback.answer()
-
-        await callback.message.bot.send_message(
-            callback.message.chat.id, "✅ Закрыто", reply_markup=kb.ungroup_main
-        )
-        return
-
-    _, action, offset_str = callback.data.split(":")
-    offset = int(offset_str)
-    limit = 10
-
-    if action == "next":
-        offset += limit
-    elif action == "prev":
-        if offset == 0:
-            await callback.answer("Вы на первой странице.", show_alert=True)
+            await callback.message.bot.send_message(
+                callback.message.chat.id, "✅ Закрыто", reply_markup=kb.ungroup_main
+            )
             return
-        offset = max(0, offset - limit)
 
-    status, groups = await response.get_groups(
-        without_application=True, token=token, limit=limit, offset=offset
-    )
+        _, action, offset_str = callback.data.split(":")
+        offset = int(offset_str)
+        limit = 10
 
-    if status == 204 or not groups:
-        await callback.answer("Групп больше нет", show_alert=True)
-        return
+        if action == "next":
+            offset += limit
+        elif action == "prev":
+            if offset == 0:
+                await callback.answer("Вы на первой странице.", show_alert=True)
+                return
+            offset = max(0, offset - limit)
 
-    await callback.message.edit_text(
-        "Выберите группу",
-        parse_mode="Markdown",
-        reply_markup=await kb.inline_groups(groups, offset=offset),
-    )
+        status, groups = await response.get_groups(
+            without_application=True, token=token, limit=limit, offset=offset
+        )
 
-    await callback.answer()
+        if status == 204 or not groups:
+            await callback.answer("Групп больше нет", show_alert=True)
+            return
+
+        await callback.message.edit_text(
+            "Выберите группу",
+            parse_mode="Markdown",
+            reply_markup=await kb.inline_groups(groups, offset=offset),
+        )
+
+        await callback.answer()

@@ -1,15 +1,31 @@
 import os
 import aiohttp
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Union, Optional
 from aiogram import Bot
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from .config import config as conf
 
 
-async def get_user_token(user_data: Dict[str, Any]) -> Optional[str]:
-    token = user_data.get("token", None)
-    return token
+async def get_user_token(
+    event: Union[Message, CallbackQuery],
+    user_data: Dict[str, Any],
+    show_error: bool = True,
+) -> Optional[str]:
+    try:
+        token = user_data.get("token")
+        if token:
+            return token
+        if isinstance(event, Message) & show_error:
+            await event.answer("Ошибка авторизации")
+        elif isinstance(event, CallbackQuery) & show_error:
+            await event.message.answer("Ошибка авторизации")
+    except Exception:
+        if isinstance(event, Message) & show_error:
+            await event.answer("Ошибка авторизации")
+        elif isinstance(event, CallbackQuery) & show_error:
+            await event.message.answer("Ошибка авторизации")
 
 
 async def clear_user_data(

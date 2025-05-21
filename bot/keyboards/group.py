@@ -44,7 +44,7 @@ student_main = ReplyKeyboardMarkup(
 
 
 async def group_menu(application_count: Optional[int]):
-    group_menu = InlineKeyboardMarkup(
+    group_menu_keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Студенты", callback_data="students")],
             [
@@ -55,11 +55,10 @@ async def group_menu(application_count: Optional[int]):
             ],
             [InlineKeyboardButton(text="Настройки", callback_data="settings")],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")],
-            # [InlineKeyboardButton(text='Удалить группу', callback_data='group_delete')]
         ]
     )
 
-    return group_menu
+    return group_menu_keyboard
 
 
 async def inline_students(students):

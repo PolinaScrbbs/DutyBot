@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from .. import response
 from .. import keyboards as kb
+from ..utils import get_user_token
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
@@ -17,7 +18,7 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    token = user_data.get("token", None)
+    token = await get_user_token(message, user_data, False)
 
     if token:
         msg = (
@@ -70,22 +71,24 @@ async def profile(message: Message, state: FSMContext):
     user_data = await state.get_data()
 
     try:
-        token = user_data["token"]
-        web_app_url = f"{conf.ngrok_url}/profile?username={message.from_user.username}&token={token}"
+        token = await get_user_token(message, user_data)
 
-        inline_keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="Открыть профиль", web_app=WebAppInfo(url=web_app_url)
-                    )
+        if token:
+            web_app_url = f"{conf.ngrok_url}/profile?username={message.from_user.username}&token={token}"
+
+            inline_keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="Открыть профиль", web_app=WebAppInfo(url=web_app_url)
+                        )
+                    ]
                 ]
-            ]
-        )
+            )
 
-        await message.answer(
-            "Откройте профиль, нажав на кнопку ниже:", reply_markup=inline_keyboard
-        )
+            await message.answer(
+                "Откройте профиль, нажав на кнопку ниже:", reply_markup=inline_keyboard
+            )
     except KeyError:
         await message.answer(
             "❗️Профиль недоступен. Пожалуйста, авторизуйтесь.", reply_markup=kb.start
@@ -96,7 +99,7 @@ async def profile(message: Message, state: FSMContext):
 async def cancel(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
-        token = user_data["token"]
+        token = await get_user_token(callback, user_data)
         user = user_data["user"]
         group = user_data["group"]
         await state.clear()
@@ -111,7 +114,7 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
 async def close(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
-        token = user_data["token"]
+        token = await get_user_token(callback, user_data)
         user = user_data["user"]
         group = user_data["group"]
         await state.clear()
