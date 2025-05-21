@@ -102,7 +102,6 @@ async def inline_groups(groups_list, offset: int = 0, tag: str = "groups_paginat
             )
         )
 
-
     keyboard.row(
         InlineKeyboardButton(text="◀ Назад", callback_data=f"{tag}:prev:{offset}"),
         InlineKeyboardButton(text="Вперёд ▶", callback_data=f"{tag}:next:{offset}"),
