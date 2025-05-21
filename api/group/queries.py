@@ -1,6 +1,6 @@
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Any
 from fastapi import HTTPException, status
-from sqlalchemy import exists, func, update, delete
+from sqlalchemy import exists, func, update, delete, Row, RowMapping
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import NoResultFound
@@ -12,33 +12,39 @@ from ..applications.models import Application, ApplicationType, ApplicationStatu
 from ..duty.models import Duty
 from ..duty.schemes import BaseDuty
 
-from .models import Group, Specialization
+from .models import Group, Specialization, GetGroupFilters
 from .schemes import (
     GroupInDB,
     GroupUpdate,
     Student,
     StudentWithDuties,
-    GroupForm,
+    GroupForm
 )
 from .utils import check_empty_groups, check_group_exists
 
 
 async def get_groups_list(
-    session: AsyncSession, skip: Optional[int], limit: Optional[int]
-) -> List[GroupInDB]:
-
-    result = await session.execute(
-        select(Group)
-        .options(
-            selectinload(Group.creator).load_only(
-                User.id, User.role, User.username, User.full_name, User.avatar_url
-            ),
-            selectinload(Group.students),
-        )
-        .offset(skip)
-        .limit(limit)
+    session: AsyncSession,
+    skip: Optional[int],
+    limit: Optional[int],
+    filters: Optional[GetGroupFilters] = None,
+) -> Sequence[Row[Any] | RowMapping | Any]:
+    stmt = select(Group).options(
+        selectinload(Group.creator).load_only(
+            User.id, User.role, User.username, User.full_name, User.avatar_url
+        ),
+        selectinload(Group.students),
     )
 
+    if filters:
+        if filters.course_number is not None:
+            stmt = stmt.where(Group.course_number == filters.course_number)
+        if filters.specialization is not None:
+            stmt = stmt.where(Group.specialization == filters.specialization)
+
+    stmt = stmt.offset(skip).limit(limit)
+
+    result = await session.execute(stmt)
     groups = result.scalars().all()
     await check_empty_groups(groups)
     return groups
@@ -135,25 +141,35 @@ async def get_group_by_title(session: AsyncSession, title: str) -> Group:
 
 
 async def get_group_without_user_application(
-    session: AsyncSession, user_id: int, skip: int = 0, limit: int = 10
+    session: AsyncSession,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 10,
+    filters: Optional[GetGroupFilters] = None,
 ) -> Sequence[Group]:
-    result = await session.execute(
-        select(Group)
-        .options(selectinload(Group.creator), selectinload(Group.students))
-        .where(
-            ~exists(
-                select(Application.id).where(
-                    Application.type == ApplicationType.GROUP_JOIN,
-                    Application.sending_id == user_id,
-                    Application.group_id == Group.id,
-                )
+    stmt = select(Group).options(
+        selectinload(Group.creator),
+        selectinload(Group.students),
+    ).where(
+        ~exists(
+            select(Application.id).where(
+                Application.type == ApplicationType.GROUP_JOIN,
+                Application.sending_id == user_id,
+                Application.group_id == Group.id,
             )
         )
-        .offset(skip)
-        .limit(limit)
     )
 
+    if filters:
+        if filters.course_number is not None:
+            stmt = stmt.where(Group.course_number == filters.course_number)
+        if filters.specialization is not None:
+            stmt = stmt.where(Group.specialization == filters.specialization)
+
+    stmt = stmt.offset(skip).limit(limit)
+    result = await session.execute(stmt)
     groups = result.scalars().all()
+    await check_empty_groups(groups)
     return groups
 
 

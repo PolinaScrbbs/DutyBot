@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import (
     Column,
     DateTime,
@@ -10,6 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 from enum import Enum as BaseEnum
+from pydantic import BaseModel
 
 from ..user.models import Base
 
@@ -80,3 +82,8 @@ class Group(Base):
             course_number=self.course_number,
             creator_id=self.creator_id,
         )
+
+
+class GetGroupFilters(BaseModel):
+    course_number: Optional[int] = None
+    specialization: Optional[Specialization] = Specialization.INFORMATION_SYSTEMS_SPECIALIST

@@ -1,6 +1,7 @@
-from typing import List, Optional, Sequence
+from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from ..database import get_session
 from ..auth.queries import get_current_user
@@ -8,7 +9,7 @@ from ..user.models import User, Role
 from ..user import utils as ut
 from ..applications.models import ApplicationStatus
 
-from .models import Specialization, Group
+from .models import Specialization, GetGroupFilters
 from .schemes import GroupInDB, GroupUpdate, GroupResponse, GroupForm, StudentWithDuties
 from . import queries as qr
 from .utils import validate_group_access
@@ -30,6 +31,7 @@ async def get_specializations(
 async def get_groups(
     skip: int = 0,
     limit: int = 10,
+    filters: GetGroupFilters = Depends(GetGroupFilters),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
     without_application: bool = False,
@@ -37,19 +39,17 @@ async def get_groups(
     if current_user.role != Role.ADMIN:
         if without_application:
             groups = await qr.get_group_without_user_application(
-                session, current_user.id, skip, limit
+                session, current_user.id, skip, limit, filters
             )
             return groups
         else:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                detail="""
-                    You do not have access to the list of groups with detailed information.\n 
-                    Specify the without_application = True parameter to get a list of groups that you did not apply to join.
-                """,
+                detail="""You do not have access to the list of groups with detailed information.\n 
+                Specify the without_application = True parameter to get a list of groups that you did not apply to join.""",
             )
     else:
-        groups = await qr.get_groups_list(session, skip, limit)
+        groups = await qr.get_groups_list(session, skip, limit, filters)
         return groups
 
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Sequence, Optional
 from fastapi import HTTPException, status
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ from ..user.models import User, Role
 from .models import Group
 
 
-async def check_empty_groups(groups: List[Group]):
+async def check_empty_groups(groups: Sequence[Group]):
     if not groups:
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
@@ -16,7 +16,7 @@ async def check_empty_groups(groups: List[Group]):
         )
 
 
-async def check_group_exists(group: Optional[Group]) -> Optional[HTTPException]:
+async def check_group_exists(group: Optional[Group]) -> None:
     if group is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
