@@ -116,6 +116,7 @@ group_update = InlineKeyboardMarkup(
                 text="Изменить номер курса", callback_data="update_group_course_number"
             ),
         ],
+        [InlineKeyboardButton(text="Удалить", callback_data="delete_group")],
         [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")],
     ]
 )

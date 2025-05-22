@@ -92,3 +92,11 @@ async def patch_group(token: str, data: Dict[str, Any]) -> Tuple[int, dict]:
             "/group", json=data, headers={"Authorization": f"Bearer {token}"}
         ) as response:
             return response.status, await response.json()
+
+
+async def delete_group(token: str) -> Tuple[int, dict]:
+    async with aiohttp.ClientSession(conf.api_url) as session:
+        async with session.delete(
+            "/group", headers={"Authorization": f"Bearer {token}"}
+        ) as response:
+            return response.status, await response.json()

@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from .. import response
 from .. import keyboards as kb
-from ..utils import get_user_token
+from .. import utils as ut
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
@@ -18,7 +18,7 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    token = await get_user_token(message, user_data, False)
+    token = await ut.get_user_token(message, user_data, False)
 
     if token:
         msg = (
@@ -43,22 +43,24 @@ async def cmd_start(message: Message, state: FSMContext):
                 await state.update_data(user_data)
 
             case "Студент":
+                keyboard = kb.ungroup_main
                 if user["group_id"] is not None:
-                    group = await response.get_group(token)
-                    user_data["group"] = group
-                    await state.update_data(user_data)
-                    keyboard = kb.student_main
-                else:
-                    keyboard = kb.ungroup_main
+                    try:
+                        group = await response.get_group(token)
+                        user_data["group"] = group
+                        await state.update_data(user_data)
+                        keyboard = kb.student_main
+                    except Exception:
+                        user["group_id"] = None
+                        await ut.clear_user_data(state, token, user, None)
 
-            case _:
+            case "Староста":
+                keyboard = kb.ungroup_main
                 if user["group_id"] is not None:
                     group = await response.get_group(token)
                     user_data["group"] = group
                     await state.update_data(user_data)
                     keyboard = kb.elder_main
-                else:
-                    keyboard = kb.ungroup_main
     else:
         msg = "Привет👋\nВыбери пункт из меню🔍"
         keyboard = kb.start
@@ -71,7 +73,7 @@ async def profile(message: Message, state: FSMContext):
     user_data = await state.get_data()
 
     try:
-        token = await get_user_token(message, user_data)
+        token = await ut.get_user_token(message, user_data)
 
         if token:
             web_app_url = f"{conf.ngrok_url}/profile?username={message.from_user.username}&token={token}"
@@ -99,7 +101,7 @@ async def profile(message: Message, state: FSMContext):
 async def cancel(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
-        token = await get_user_token(callback, user_data)
+        token = await ut.get_user_token(callback, user_data)
         user = user_data["user"]
         group = user_data["group"]
         await state.clear()
@@ -114,7 +116,7 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
 async def close(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
-        token = await get_user_token(callback, user_data)
+        token = await ut.get_user_token(callback, user_data)
         user = user_data["user"]
         group = user_data["group"]
         await state.clear()

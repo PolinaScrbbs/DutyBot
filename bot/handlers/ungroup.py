@@ -94,6 +94,7 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
             title, specialization, course_number, token
         )
 
+        user_data["user"]["group_id"] = json_response["group"]["id"]
         await ut.clear_user_data(state, token, user_data["user"])
         if status == 201:
             await callback.message.answer(

@@ -200,3 +200,24 @@ async def update_group_course(callback: CallbackQuery, state: FSMContext):
         )
 
     await group_menu(callback.message, state)
+
+
+@router.callback_query(F.data == "delete_group")
+async def group_settings(callback: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    token = await ut.get_user_token(callback, user_data)
+    if token:
+        status, err = await response.delete_group(token)
+        user_data["user"]["group_id"] = None
+        await ut.clear_user_data(state, token, user_data["user"], None)
+        if status == 200:
+            await callback.message.edit_text(f"✅ Группа удалена.")
+            await callback.message.answer(
+                f"С возвращением, @{callback.message.from_user.username}👋\nВыбери пункт из меню🔍",
+                reply_markup=kb.ungroup_main,
+            )
+
+        else:
+            await callback.message.edit_text(
+                f"❌ Не удалось удалить группу: {err['detail']}"
+            )
