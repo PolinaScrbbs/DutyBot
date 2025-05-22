@@ -14,7 +14,7 @@ from .. import utils as ut
 @router.callback_query(F.data == "grp_applications")
 async def group_applications_list(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
-    token = ut.get_user_token(callback, user_data)
+    token = await ut.get_user_token(callback, user_data)
 
     if token:
         user = user_data["user"]

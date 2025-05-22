@@ -85,7 +85,7 @@ async def post_group(
 
 @router.patch("/group")
 async def patch_group(
-    updated_group: GroupUpdate = Depends(GroupUpdate),
+    updated_group: GroupUpdate = GroupUpdate,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -100,6 +100,8 @@ async def patch_group(
     )
     await validator.validate()
 
+    if updated_group.specialization:
+        updated_group.specialization = Specialization(updated_group.specialization)
     update_data = await qr.update_group(session, current_user.id, updated_group)
 
     return {"detail": "Группа обновлена", "group": update_data}

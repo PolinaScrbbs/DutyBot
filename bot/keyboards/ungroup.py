@@ -33,6 +33,7 @@ ungroup_main = ReplyKeyboardMarkup(
 
 async def create_specializations_keyboard(
     specializations: List[str],
+    prefix: str = "spec_",
 ) -> InlineKeyboardBuilder:
 
     keyboard = InlineKeyboardBuilder()
@@ -45,18 +46,18 @@ async def create_specializations_keyboard(
     for j in range(0, len_range, 2):
         keyboard.row(
             InlineKeyboardButton(
-                text=specializations[j], callback_data=f"spec_{specializations[j]}"
+                text=specializations[j], callback_data=f"{prefix}{specializations[j]}"
             ),
             InlineKeyboardButton(
                 text=specializations[j + 1],
-                callback_data=f"spec_{specializations[j+1]}",
+                callback_data=f"{prefix}{specializations[j+1]}",
             ),
         )
 
     if len(specializations) % 2 != 0:
         keyboard.row(
             InlineKeyboardButton(
-                text=specializations[-1], callback_data=f"spec_{specializations[-1]}"
+                text=specializations[-1], callback_data=f"{prefix}{specializations[-1]}"
             )
         )
 
@@ -65,16 +66,19 @@ async def create_specializations_keyboard(
     return keyboard.as_markup()
 
 
-course_number = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="1 курс", callback_data="course_number_1"),
-            InlineKeyboardButton(text="2 курс", callback_data="course_number_2"),
-            InlineKeyboardButton(text="3 курс", callback_data="course_number_3"),
-            InlineKeyboardButton(text="4 курс", callback_data="course_number_4"),
+async def course_number(prefix: str = "course_number_") -> InlineKeyboardMarkup:
+    course_number_markup = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="1 курс", callback_data=f"{prefix}1"),
+                InlineKeyboardButton(text="2 курс", callback_data=f"{prefix}2"),
+                InlineKeyboardButton(text="3 курс", callback_data=f"{prefix}3"),
+                InlineKeyboardButton(text="4 курс", callback_data=f"{prefix}4"),
+            ]
         ]
-    ]
-)
+    )
+
+    return course_number_markup
 
 
 async def inline_groups(groups_list, offset: int = 0, tag: str = "groups_pagination"):

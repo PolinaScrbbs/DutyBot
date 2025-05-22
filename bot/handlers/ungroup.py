@@ -72,7 +72,7 @@ async def group_specialization(callback: CallbackQuery, state: FSMContext):
         f"Вы выбрали *{specialization}*", parse_mode="Markdown"
     )
     await callback.message.answer(
-        "Выберите свой курс обучения", reply_markup=kb.course_number
+        "Выберите свой курс обучения", reply_markup=await kb.course_number()
     )
 
 

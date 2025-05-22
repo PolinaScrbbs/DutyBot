@@ -31,7 +31,7 @@ async def profile():
             "role": "Студент",
             "created_at": datetime.now().isoformat(),
             "group_id": None,
-            "avatar_url": "media\\avatars\\default.jpg"
+            "avatar_url": "media\\avatars\\default.jpg",
         }
     else:
         status, user = await get_user(username, token)
@@ -43,7 +43,7 @@ async def profile():
                 "role": "Студент",
                 "created_at": datetime.now().isoformat(),
                 "group_id": None,
-                "avatar_url": "media\\avatars\\default.jpg"
+                "avatar_url": "media\\avatars\\default.jpg",
             }
 
     locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
@@ -114,7 +114,6 @@ async def profile():
     if not template:
         return "Unknown role", 400
     return await render_template(template, **context)
-
 
 
 @app.route("/media/<path:filename>")

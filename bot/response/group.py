@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 import aiohttp
 
@@ -14,7 +14,6 @@ async def get_specializations(token: str):
 
 
 async def post_group(title: str, specialization: str, course_number: int, token: str):
-    print(title, specialization, course_number)
     async with aiohttp.ClientSession(conf.api_url) as session:
         async with session.post(
             "/groups",
@@ -85,3 +84,11 @@ async def kick_student(student_id: int, token: str) -> Tuple[int, str]:
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
             return response.status, await response.text()
+
+
+async def patch_group(token: str, data: Dict[str, Any]) -> Tuple[int, dict]:
+    async with aiohttp.ClientSession(conf.api_url) as session:
+        async with session.patch(
+            "/group", json=data, headers={"Authorization": f"Bearer {token}"}
+        ) as response:
+            return response.status, await response.json()

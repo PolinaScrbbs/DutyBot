@@ -98,3 +98,24 @@ async def inline_student(student: dict):
     )
 
     return keyboard.as_markup()
+
+
+group_update = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Изменить название", callback_data="update_group_title"
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="Изменить специальность",
+                callback_data="update_group_specialization",
+            ),
+            InlineKeyboardButton(
+                text="Изменить номер курса", callback_data="update_group_course_number"
+            ),
+        ],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")],
+    ]
+)
