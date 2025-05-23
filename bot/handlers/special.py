@@ -45,7 +45,7 @@ async def cmd_start(message: Message, state: FSMContext):
 
             case "Студент":
                 keyboard = kb.ungroup_main
-                if user["group_id"] is not None:
+                if user["group_id"]:
                     try:
                         group = await response.get_group(token)
                         user_data["group"] = group
@@ -57,7 +57,7 @@ async def cmd_start(message: Message, state: FSMContext):
 
             case "Староста":
                 keyboard = kb.ungroup_main
-                if user["group_id"] is not None:
+                if user["group_id"]:
                     group = await response.get_group(token)
                     user_data["group"] = group
                     await state.update_data(user_data)

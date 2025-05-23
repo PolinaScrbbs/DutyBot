@@ -37,7 +37,9 @@ async def get_current_attendants(token: str) -> Tuple[int, dict]:
             "/current_attendants",
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
-            return response.status, await response.json()
+            if response.status == 200:
+                json = await response.json()
+                return response.status, json["attendants"]
 
 
 async def post_duty(token: str, students_id: List[int]) -> int:

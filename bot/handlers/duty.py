@@ -78,7 +78,6 @@ async def get_current_attendant(message: Message, state: FSMContext):
 
     if token:
         status, attendants = await response.get_current_attendants(token)
-
         if status == 200:
             await message.answer(
                 f"🛡️ *Текущие дежурные*:\n👷🏿 {attendants[0]['full_name']}\n👷🏿 {attendants[1]['full_name']}",
