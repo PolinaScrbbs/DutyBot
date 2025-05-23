@@ -30,6 +30,12 @@ async def cmd_start(message: Message, state: FSMContext):
             message.from_user.username, token
         )
 
+        if status == 401:
+            user_data["token"] = None
+            await message.answer(
+                "Токен истек. Пройдите авторизацию", reply_markup=kb.start
+            )
+
         user_data["user"] = user
         await state.update_data(user_data)
 

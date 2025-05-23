@@ -88,4 +88,4 @@ async def update_application(
         session, current_user, application_id, ApplicationStatus(update_status)
     )
 
-    return {"message": f"✅ Статус заявки обновлён на: {update_status.label}"}
+    return {"message": msg}

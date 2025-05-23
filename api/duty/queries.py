@@ -57,28 +57,33 @@ async def get_users_data(
     attendant_id: Optional[int] = None,
     limit: int = 10,
     offset: int = 0,
-) -> List[Tuple[User, List[Duty]]]:
+) -> List[Tuple[User, Duty]]:
     await duty_protection(current_user, group_id)
 
+    duty_query = (
+        select(Duty)
+        .join(Duty.attendant)
+        .options(selectinload(Duty.attendant).selectinload(User.duties))
+    )
+
     if current_user.role != Role.STUDENT:
-        query = select(User).where(
+        duty_query = duty_query.where(
             User.group_id == group_id, User.id != current_user.id
         )
     else:
-        query = select(User).where(
+        duty_query = duty_query.where(
             User.group_id == group_id, User.id == current_user.id
         )
 
     if attendant_id is not None:
-        query = query.where(User.id == attendant_id)
+        duty_query = duty_query.where(User.id == attendant_id)
 
-    query = query.options(selectinload(User.duties))
-    query = query.limit(limit).offset(offset)
+    duty_query = duty_query.order_by(Duty.date.desc()).offset(offset).limit(limit)
 
-    result = await session.execute(query)
-    users = result.scalars().all()
+    result = await session.execute(duty_query)
+    duties = result.scalars().all()
 
-    return [(user, user.duties) for user in users]
+    return [(duty.attendant, duty) for duty in duties]
 
 
 # Получение списка дежурств по группе
@@ -94,32 +99,34 @@ async def get_group_duties(
     if group_id is None:
         group_id = current_user.group_id
 
-    attendants_data = await get_users_data(
+    duties_data = await get_users_data(
         session, current_user, group_id, attendant_id, limit, offset
     )
 
+    if not duties_data:
+        raise HTTPException(status.HTTP_204_NO_CONTENT)
+
     duties_with_out_id = []
 
-    for user, duties in attendants_data:
-        duties_count = len(duties)
-        last_duty = max((duty.date for duty in duties), default=None)
-
+    for user, duty in duties_data:
         attendant = Student(
             id=user.id,
             username=user.username,
             full_name=user.full_name,
-            duties_count=duties_count,
-            last_duty=last_duty.strftime("%H:%M %d-%m-%Y") if last_duty else last_duty,
+            duties_count=len(user.duties),
+            last_duty=(
+                max((d.date for d in user.duties), default=None).strftime(
+                    "%H:%M %d-%m-%Y"
+                )
+                if user.duties
+                else None
+            ),
         )
 
-        for duty in duties:
-            formatted_date = await duty.formatted_date
-            duties_with_out_id.append(
-                DutyWithOutId(attendant=attendant, date=formatted_date)
-            )
-
-    if not duties_with_out_id:
-        raise HTTPException(status.HTTP_204_NO_CONTENT)
+        formatted_date = await duty.formatted_date
+        duties_with_out_id.append(
+            DutyWithOutId(attendant=attendant, date=formatted_date)
+        )
 
     return duties_with_out_id
 

@@ -127,7 +127,7 @@ async def duty_list(message: Message, state: FSMContext):
 
     if token:
         offset = 0
-        limit = 10
+        limit = 5
 
         status, duties = await response.get_duties(token, limit=limit, offset=offset)
 
@@ -148,7 +148,7 @@ async def duty_count(message: Message, state: FSMContext):
     token = await ut.get_user_token(message, user_data)
 
     if token:
-        limit = 10
+        limit = 3
         offset = 0
 
         status, duties_count = await response.get_duties(
@@ -183,7 +183,7 @@ async def duties_pagination(callback: CallbackQuery, state: FSMContext):
 
         _, action, offset_str = callback.data.split(":")
         offset = int(offset_str)
-        limit = 10
+        limit = 5
 
         if action == "next":
             offset += limit
@@ -229,7 +229,7 @@ async def handle_duties_pagination(callback: CallbackQuery, state: FSMContext):
 
         _, action, offset_str = callback.data.split(":")
         offset = int(offset_str)
-        limit = 10
+        limit = 3
 
         if action == "next":
             offset += limit
