@@ -12,14 +12,15 @@ async def check_empty_groups(groups: Sequence[Group]):
     if not groups:
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
-            detail="No content: groups list is empty",
+            detail="Нет данных: список групп пуст",
         )
 
 
 async def check_group_exists(group: Optional[Group]) -> None:
     if group is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Группа не найдена",
         )
 
 
@@ -29,7 +30,7 @@ async def validate_group_access(current_user: User, group_id: Optional[int]) -> 
     if current_user.role != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to access the resource",
+            detail="Недостаточно прав для доступа к ресурсу",
         )
     return group_id
 
@@ -39,6 +40,7 @@ async def group_exists(session: AsyncSession, title: str) -> None:
     group_exists = result.scalar()
 
     if group_exists:
-        HTTPException(
-            status.HTTP_409_CONFLICT, "A group with this title already exists"
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Группа с таким названием уже существует",
         )

@@ -20,6 +20,7 @@ from enum import Enum as BaseEnum
 from ..config import config as conf
 from ..database import Base
 from .schemes import BaseUser
+from ..duty.models import Duty
 
 
 class Role(BaseEnum):
@@ -110,7 +111,7 @@ class User(Base):
     #         .order_by(Duty.date.desc())
     #         .limit(1)
     #     )
-
+    #
     #     return result.scalar_one_or_none()
 
 
@@ -126,7 +127,7 @@ class Token(Base):
     async def verify_token(self, session: AsyncSession, user: Optional[User]):
         try:
             jwt.decode(self.token, conf.secret_key, algorithms=["HS256"])
-            return status.HTTP_200_OK, "The user's token has been verified", self
+            return status.HTTP_200_OK, "Токен пользователя успешно проверен", self
 
         except jwt.ExpiredSignatureError:
             return await self.refresh_token(session, user)
@@ -134,7 +135,7 @@ class Token(Base):
         except jwt.InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
+                detail="Неверный токен",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -142,7 +143,7 @@ class Token(Base):
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Expired token",
+                detail="Истёкший токен",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -152,4 +153,4 @@ class Token(Base):
         session.add(self)
         await session.commit()
 
-        return status.HTTP_200_OK, "The user's token has been updated", self
+        return status.HTTP_200_OK, "Токен пользователя обновлён", self

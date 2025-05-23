@@ -11,7 +11,6 @@ from ..group.models import Group
 async def get_users_list(
     session: AsyncSession, skip: Optional[int], limit: Optional[int]
 ) -> List[User]:
-
     result = await session.execute(
         select(User)
         .options(
@@ -31,12 +30,11 @@ async def get_users_list(
 
 
 async def get_user_by_username(session: AsyncSession, username: str) -> User:
-
     result = await session.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
 
     if user is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
 
     return user
 
@@ -47,6 +45,6 @@ async def get_user_by_id(session: AsyncSession, id: int) -> User:
     user = result.scalar_one_or_none()
 
     if user is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
 
     return user

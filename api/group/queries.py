@@ -47,7 +47,6 @@ async def get_groups_list(
 async def create_group(
     session: AsyncSession, group_create: GroupForm, creator_id: int
 ) -> Group:
-
     group = Group(
         title=group_create.title,
         specialization=Specialization(group_create.specialization),
@@ -174,7 +173,6 @@ async def get_group_without_user_application(
 async def get_group_students(
     session: AsyncSession, current_user_id: int, group_id: Optional[int] = None
 ) -> List[StudentWithDuties]:
-    print(group_id)
     result = await session.execute(
         select(
             User,
@@ -216,7 +214,6 @@ async def get_group_students(
 async def get_group_student(
     session: AsyncSession, current_user: User, group_id: int, student_id: int
 ) -> StudentWithDuties:
-
     if current_user.role == Role.ELDER:
         exists = await session.execute(
             select(User.id).where(User.id == student_id, User.group_id == group_id)
@@ -226,7 +223,7 @@ async def get_group_student(
         if not student_exists:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                detail="There are not enough rights to receive information from a student from another group",
+                detail="Недостаточно прав для получения информации о студенте из другой группы",
             )
 
     result = await session.execute(
@@ -262,17 +259,18 @@ async def application_reply(
 
     if current_user == user:
         raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="You cannot accept yourself"
+            status.HTTP_409_CONFLICT, detail="Нельзя принять самого себя"
         )
     if current_user.role != Role.ELDER:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            detail="Only the head of the group can accept a student",
+            detail="Только староста может принять студента",
         )
 
     if current_user.group_id != user.group_id:
         raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="This student is not from your group"
+            status.HTTP_409_CONFLICT,
+            detail="Этот студент не из вашей группы",
         )
 
     result = await session.execute(
@@ -288,7 +286,7 @@ async def application_reply(
     if application is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail="The user's entry application was not found",
+            detail="Заявка студента на вступление в группу не найдена",
         )
 
     user.group_id = current_user.group_id
@@ -300,11 +298,14 @@ async def kick_student(session: AsyncSession, current_user: User, user_id: int):
     user = await get_user_by_id(session, user_id)
 
     if current_user == user:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="You can't kick yourself")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="Нельзя исключить самого себя"
+        )
 
     if current_user.group_id != user.group_id:
         raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="This student is not from your group"
+            status.HTTP_409_CONFLICT,
+            detail="Этот студент не из вашей группы",
         )
 
     user.group_id = None

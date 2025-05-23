@@ -28,13 +28,13 @@ async def application_validate(
             group_exists = group_exists.scalar()
 
             if not group_exists:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Group not found")
+                raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Группа не найдена")
 
             return group_id
 
         else:
             raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, detail="The group ID cannot be empty"
+                status.HTTP_400_BAD_REQUEST, detail="ID группы не может быть пустым"
             )
 
 
@@ -72,7 +72,7 @@ async def create_application(
         and current_user.group_id is not None
     ):
         raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="You are already a member of the group"
+            status.HTTP_409_CONFLICT, detail="Вы уже состоите в группе"
         )
 
     group_id = await application_validate(session, application_type, group_id)
@@ -84,7 +84,7 @@ async def create_application(
     if application_exists:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Your application has already been submitted or closed",
+            "Ваша заявка уже была отправлена или закрыта",
         )
 
     application = Application(
@@ -141,7 +141,7 @@ async def get_application_by_id(
     application = result.scalar_one_or_none()
 
     if application is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Заявка не найдена")
 
     return application
 
@@ -161,12 +161,12 @@ async def update_application(
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient rights to access this resource",
+                detail="Недостаточно прав для доступа к ресурсу",
             )
 
     if application.status != ApplicationStatus.SENT:
         raise HTTPException(
-            status.HTTP_409_CONFLICT, "Cannot update application with this status"
+            status.HTTP_409_CONFLICT, "Нельзя изменить заявку с таким статусом"
         )
 
     match update_status:
@@ -176,18 +176,18 @@ async def update_application(
 
             if application.type == ApplicationType.GROUP_JOIN:
                 sending.group_id = application.group_id
-                msg = f"Student @{sending.username} has been accepted into the group"
+                msg = f"Студент @{sending.username} был принят в группу"
             else:
                 sending.role = Role.ELDER
-                msg = f'Student @{sending.username} ({sending.full_name}) got the role of "Elder"'
+                msg = f'Студент @{sending.username} ({sending.full_name}) получил роль "Староста"'
 
         case ApplicationStatus.REJECTED:
             application.status = ApplicationStatus.REJECTED
-            msg = "The application was rejected"
+            msg = "Заявка была отклонена"
 
         case _:
             raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "Unsupported application status"
+                status.HTTP_400_BAD_REQUEST, "Недопустимый статус заявки"
             )
 
     await session.commit()

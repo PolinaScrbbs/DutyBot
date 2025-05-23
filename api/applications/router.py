@@ -12,9 +12,7 @@ from .models import ApplicationType, ApplicationStatus
 from . import queries as qr
 from .schemes import ApplicationForm, ApplicationWithSending
 
-
 router = APIRouter()
-
 
 @router.post("/applications", response_class=JSONResponse)
 async def post_application(
@@ -22,16 +20,13 @@ async def post_application(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> JSONResponse:
-
     await qr.create_application(
         session, current_user, application_data, sending_id=current_user.id
     )
-
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
-        content={"message": "The application has been sent"},
+        content={"message": "✅ Заявка успешно отправлена"},
     )
-
 
 @router.get("/applications", response_model=List[ApplicationWithSending])
 async def get_applications(
@@ -47,27 +42,16 @@ async def get_applications(
     await ut.elder_admin_check(current_user)
     await ut.user_group_exists(current_user)
 
-    # if current_user.role == Role.ELDER:
-    #     if group_id is None:
-    #         group_id = current_user.group_id
-    #     else:
-    #         raise HTTPException(
-    #             status.HTTP_403_FORBIDDEN,
-    #             detail="You cannot use a request with the user_id parameter"
-    #         )
-
     applications = await qr.get_applications_list(
         session, skip, limit, application_type, application_status, group_id
     )
 
     if not applications:
         raise HTTPException(
-            status.HTTP_204_NO_CONTENT, detail="List of applications is empty"
+            status.HTTP_204_NO_CONTENT, detail="Список заявок пуст"
         )
 
-    print(applications)
     return applications
-
 
 @router.get("/application/{application_id}", response_model=ApplicationWithSending)
 async def get_application_by_id(
@@ -84,11 +68,10 @@ async def get_application_by_id(
         if application.group_id != current_user.group_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient rights to access this resource",
+                detail="❌ У вас нет доступа к этой заявке",
             )
 
     return application
-
 
 @router.put("/application/{application_id}")
 async def update_application(
@@ -103,4 +86,4 @@ async def update_application(
         session, current_user, application_id, ApplicationStatus(update_status)
     )
 
-    return msg
+    return {"message": f"✅ Статус заявки обновлён на: {update_status.label}"}

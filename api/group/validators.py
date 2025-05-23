@@ -37,37 +37,41 @@ class GroupValidator:
         await group_exists(self.session, self.title)
         if not self.title or self.title == "":
             raise ValidateError(
-                "Title cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Название группы не может быть пустым",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if not (4 <= len(self.title) <= 20):
             raise ValidateError(
-                "Group title must be between 4 and 20 characters long",
+                "Название группы должно содержать от 4 до 20 символов",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if not re.match(r"^[A-Za-z0-9 ]+$", self.title):
             raise ValidateError(
-                "Group title must consist only of English letters, digits, and spaces",
+                "Название группы может содержать только латинские буквы, цифры и пробелы",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
     async def validate_specialization(self):
         if not self.specialization or self.specialization == "":
             raise ValidateError(
-                "Specialization cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Специализация не может быть пустой",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if self.specialization not in self.specializations:
             raise ValidateError(
-                "Specialization is not valid", status.HTTP_400_BAD_REQUEST
+                "Недопустимая специализация",
+                status.HTTP_400_BAD_REQUEST,
             )
 
     async def validate_course_number(self):
         if not self.course_number or self.course_number == "":
             raise ValidateError(
-                "Course number cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Номер курса не может быть пустым",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if self.course_number not in [1, 2, 3, 4]:
             raise ValidateError(
-                "The course number can be a number from 1 to 4",
+                "Номер курса должен быть числом от 1 до 4",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
@@ -102,32 +106,35 @@ class GroupUpdateValidator:
         await group_exists(self.session, self.title)
         if self.title == "":
             raise ValidateError(
-                "Title cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Название группы не может быть пустым",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if not (4 <= len(self.title) <= 20):
             raise ValidateError(
-                "Group title must be between 4 and 20 characters long",
+                "Название группы должно содержать от 4 до 20 символов",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if not re.match(r"^[A-Za-z0-9 ]+$", self.title):
             raise ValidateError(
-                "Group title must consist only of English letters, digits, and spaces",
+                "Название группы может содержать только латинские буквы, цифры и пробелы",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
     async def validate_specialization(self):
         if self.specialization == "":
             raise ValidateError(
-                "Specialization cannot be empty", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Специализация не может быть пустой",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if self.specialization not in self.specializations:
             raise ValidateError(
-                "Specialization is not valid", status.HTTP_400_BAD_REQUEST
+                "Недопустимая специализация",
+                status.HTTP_400_BAD_REQUEST,
             )
 
     async def validate_course_number(self):
         if self.course_number not in [1, 2, 3, 4]:
             raise ValidateError(
-                "The course number can be a number from 1 to 4",
+                "Номер курса должен быть числом от 1 до 4",
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
             )

@@ -20,19 +20,18 @@ async def post_duties(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-
     await ut.elder_check(current_user)
     await ut.user_group_exists(current_user)
     await qr.post_duties(session, current_user, attendant_ids)
-    return Response("The duties are set", status.HTTP_201_CREATED)
+    return Response("✅ Дежурные успешно назначены", status.HTTP_201_CREATED)
 
 
 @router.get("/duties", response_model=List[DutyWithOutId])
 async def get_group_duties(
     group_id: Optional[int] = None,
     attendant_id: Optional[int] = None,
-    limit: int = Query(10, ge=1),
-    offset: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, description="Максимальное количество записей"),
+    offset: int = Query(0, ge=0, description="Смещение для пагинации"),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> List[DutyWithOutId]:
@@ -70,4 +69,7 @@ async def get_current_attendants(
 ):
     group_id = await validate_group_access(current_user, group_id)
     current_attendants = await qr.get_current_attendants(session, group_id)
-    return current_attendants
+    return {
+        "message": "🟢 Текущие дежурные получены успешно",
+        "attendants": current_attendants
+    }

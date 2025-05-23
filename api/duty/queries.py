@@ -13,6 +13,7 @@ from .models import Duty
 from .schemes import BaseStudent, Student, DutyWithOutId
 
 
+# Создание новых дежурств
 async def post_duties(
     session: AsyncSession, current_user: User, attendant_ids: List[int]
 ) -> None:
@@ -24,7 +25,7 @@ async def post_duties(
         if current_user.group_id != student.group_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can't set shifts for students of another group",
+                detail="Вы не можете назначать дежурства студентам из другой группы",
             )
 
         duty = Duty(attendant_id=student_id)
@@ -34,6 +35,7 @@ async def post_duties(
     await session.commit()
 
 
+# Проверка доступа к дежурствам группы
 async def duty_protection(
     current_user: User,
     group_id: int,
@@ -43,10 +45,11 @@ async def duty_protection(
         if current_user.group_id != group_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have access to the duties of someone else's group",
+                detail="У вас нет доступа к дежурствам чужой группы",
             )
 
 
+# Получение данных о пользователях и их дежурствах
 async def get_users_data(
     session: AsyncSession,
     current_user: User,
@@ -70,7 +73,6 @@ async def get_users_data(
         query = query.where(User.id == attendant_id)
 
     query = query.options(selectinload(User.duties))
-
     query = query.limit(limit).offset(offset)
 
     result = await session.execute(query)
@@ -79,6 +81,7 @@ async def get_users_data(
     return [(user, user.duties) for user in users]
 
 
+# Получение списка дежурств по группе
 async def get_group_duties(
     session: AsyncSession,
     current_user: User,
@@ -121,6 +124,7 @@ async def get_group_duties(
     return duties_with_out_id
 
 
+# Получение списка студентов, которым можно назначить дежурство
 async def get_group_attendants(
     session: AsyncSession, elder_id: int, group_id: int, missed_students_id: List[int]
 ) -> List[BaseStudent]:
@@ -157,6 +161,7 @@ async def get_group_attendants(
     ]
 
 
+# Получение текущих дежурных студентов
 async def get_current_attendants(session: AsyncSession, group_id: int):
     result = await session.execute(
         select(User.id, User.username, User.full_name)

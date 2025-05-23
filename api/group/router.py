@@ -2,7 +2,6 @@ from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from ..database import get_session
 from ..auth.queries import get_current_user
 from ..user.models import User, Role
@@ -45,8 +44,8 @@ async def get_groups(
         else:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                detail="""You do not have access to the list of groups with detailed information.\n 
-                Specify the without_application = True parameter to get a list of groups that you did not apply to join.""",
+                detail="""У вас нет доступа к полному списку групп.
+Укажите параметр without_application=True, чтобы получить список групп, в которые вы не подавали заявку.""",
             )
     else:
         groups = await qr.get_groups_list(session, skip, limit, filters)
@@ -64,7 +63,7 @@ async def post_group(
     if current_user.group_id is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A group with this title already exists for the current user.",
+            detail="У текущего пользователя уже есть группа.",
         )
 
     validator = GroupValidator(
@@ -78,7 +77,7 @@ async def post_group(
 
     group = await qr.create_group(session, group_data, current_user.id)
     pydantic_group = await group.to_pydantic()
-    msg = f"The group {group.title} was created"
+    msg = f"Группа {group.title} успешно создана"
 
     return GroupResponse(message=msg, group=pydantic_group)
 
@@ -104,7 +103,7 @@ async def patch_group(
         updated_group.specialization = Specialization(updated_group.specialization)
     update_data = await qr.update_group(session, current_user.id, updated_group)
 
-    return {"detail": "Группа обновлена", "group": update_data}
+    return {"detail": "Группа успешно обновлена", "group": update_data}
 
 
 @router.delete("/group")
@@ -196,6 +195,6 @@ async def kick_student(
     student_first_name, student_last_name = student.full_name.split()[:2]
 
     return Response(
-        content=f"The {student.username} ({student_first_name} {student_last_name}) has been removed from the group.\nThe student's duties have been cleared",
+        content=f"{student.username} ({student_first_name} {student_last_name}) исключён(а) из группы.\nДежурства студента очищены.",
         status_code=status.HTTP_200_OK,
     )
