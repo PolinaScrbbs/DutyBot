@@ -22,7 +22,8 @@ async def cmd_start(message: Message, state: FSMContext):
 
     if token:
         msg = (
-            f"С возвращением, @{message.from_user.username}👋 \nВыбери пункт из меню🔍"
+            f"👋 Привет, @{message.from_user.username}! Рады снова видеть тебя!\n"
+            "Выбери нужный раздел в меню ниже 🔍"
         )
 
         status, user = await response.get_user_by_username(
@@ -62,7 +63,7 @@ async def cmd_start(message: Message, state: FSMContext):
                     await state.update_data(user_data)
                     keyboard = kb.elder_main
     else:
-        msg = "Привет👋\nВыбери пункт из меню🔍"
+        msg = "👋 Добро пожаловать! Пожалуйста, выбери пункт меню ниже, чтобы начать 🔍"
         keyboard = kb.start
 
     await message.answer(text=msg, parse_mode="Markdown", reply_markup=keyboard)
@@ -82,18 +83,21 @@ async def profile(message: Message, state: FSMContext):
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            text="Открыть профиль", web_app=WebAppInfo(url=web_app_url)
+                            text="👤 Перейти в профиль",
+                            web_app=WebAppInfo(url=web_app_url),
                         )
                     ]
                 ]
             )
 
             await message.answer(
-                "Откройте профиль, нажав на кнопку ниже:", reply_markup=inline_keyboard
+                "Для просмотра вашего профиля нажмите на кнопку ниже 👇",
+                reply_markup=inline_keyboard,
             )
     except KeyError:
         await message.answer(
-            "❗️Профиль недоступен. Пожалуйста, авторизуйтесь.", reply_markup=kb.start
+            "❗️ Профиль недоступен. Пожалуйста, авторизуйтесь, чтобы продолжить.",
+            reply_markup=kb.start,
         )
 
 
@@ -102,14 +106,16 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
         token = await ut.get_user_token(callback, user_data)
-        user = user_data["user"]
-        group = user_data["group"]
+        user = user_data.get("user")
+        group = user_data.get("group")
         await state.clear()
         await state.update_data({"token": token, "user": user, "group": group})
-    except:
+    except Exception:
         await state.clear()
 
-    await callback.message.edit_text("✅ Отменено")
+    await callback.message.edit_text(
+        "❌ Действие отменено. Если что — всегда можно начать заново!"
+    )
 
 
 @router.callback_query(F.data == "close")
@@ -117,11 +123,13 @@ async def close(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     try:
         token = await ut.get_user_token(callback, user_data)
-        user = user_data["user"]
-        group = user_data["group"]
+        user = user_data.get("user")
+        group = user_data.get("group")
         await state.clear()
         await state.update_data({"token": token, "user": user, "group": group})
     except KeyError:
         await state.clear()
 
-    await callback.message.edit_text("✅ Закрыто")
+    await callback.message.edit_text(
+        "✅ Окно успешно закрыто. Если понадобится — обращайтесь! 👋"
+    )

@@ -25,19 +25,19 @@ async def group_create(message: Message, state: FSMContext):
 
         if user["role"] != "Староста":
             await message.answer(
-                f'Сначала необходимо стать "Старостой", подайте заявку, её рассмотрят в ближайшее время',
+                '❗ Чтобы создать группу, нужно стать "Старостой".\nПодайте заявку — её рассмотрят в ближайшее время 😊',
                 reply_markup=kb.ungroup_main,
             )
             return
 
         elif user["group_id"] is not None:
             await message.answer(
-                f'"Староста" может создать только 1 группу',
+                '⚠️ Вы уже создали группу! "Староста" может управлять только одной группой.',
                 reply_markup=kb.ungroup_main,
             )
             return
 
-        await message.answer(f"Введите название группы (Не номер)")
+        await message.answer("📝 Введите название вашей новой группы (не номер).")
         await state.set_state(st.GroupCreate.title)
 
 
@@ -53,7 +53,7 @@ async def group_title(message: Message, state: FSMContext):
     status, specializations = await response.get_specializations(token)
 
     await message.answer(
-        "Выберите свою специальность",
+        "✨ Отлично! Теперь выберите вашу специальность из списка ниже.",
         reply_markup=await kb.create_specializations_keyboard(specializations),
     )
 
@@ -69,10 +69,11 @@ async def group_specialization(callback: CallbackQuery, state: FSMContext):
     await state.update_data(user_data)
 
     await callback.message.edit_text(
-        f"Вы выбрали *{specialization}*", parse_mode="Markdown"
+        f"✅ Вы выбрали специальность *{specialization}*.", parse_mode="Markdown"
     )
     await callback.message.answer(
-        "Выберите свой курс обучения", reply_markup=await kb.course_number()
+        "📚 Теперь выберите номер курса обучения.",
+        reply_markup=await kb.course_number(),
     )
 
 
@@ -85,7 +86,7 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
     specialization = user_data["specialization"]
     course_number = int(callback.data.split("_")[2])
     await callback.message.edit_text(
-        f"Вы выбрали *{course_number} курс*", parse_mode="Markdown"
+        f"🎓 Вы выбрали *{course_number}* курс.", parse_mode="Markdown"
     )
 
     token = await ut.get_user_token(callback, user_data)
@@ -98,11 +99,11 @@ async def group_course_number(callback: CallbackQuery, state: FSMContext):
         await ut.clear_user_data(state, token, user_data["user"])
         if status == 201:
             await callback.message.answer(
-                f"Группа {title} создана", reply_markup=kb.elder_main
+                f"🎉 Группа «{title}» успешно создана!", reply_markup=kb.elder_main
             )
         else:
             await callback.message.answer(
-                f"❌ *{json_response['detail'].upper()}*", "Markdown"
+                f"❌ Ошибка: *{json_response['detail'].upper()}*", parse_mode="Markdown"
             )
 
 
@@ -112,16 +113,17 @@ async def group_join(message: Message, state: FSMContext):
     status, groups = await response.get_groups(
         without_application=True, token=user_data["token"], limit=10, offset=0
     )
-
-    if groups:
+    if status == 204:
         await message.answer(
-            "Выберите группу",
+            "😔 Пока нет доступных групп для вступления.",
             parse_mode="Markdown",
-            reply_markup=await kb.inline_groups(groups, offset=0),
+            reply_markup=kb.ungroup_main,
         )
     else:
         await message.answer(
-            "Группы не найдены", parse_mode="Markdown", reply_markup=kb.ungroup_main
+            "🔍 Выберите группу, в которую хотите вступить:",
+            parse_mode="Markdown",
+            reply_markup=await kb.inline_groups(groups, offset=0),
         )
 
 
@@ -137,7 +139,8 @@ async def group_application(callback: CallbackQuery, state: FSMContext):
     )
 
     await callback.message.edit_text(
-        f"Заявка на вступление в *{group_title}* отправлена", parse_mode="Markdown"
+        f"📩 Ваша заявка на вступление в группу *{group_title}* успешно отправлена!",
+        parse_mode="Markdown",
     )
 
 
@@ -147,10 +150,11 @@ async def elder_application(message: Message, state: FSMContext):
     status, json_response = await response.post_application(user_data["token"])
 
     if status == 201:
-        await message.answer(f'Заявка на получение роли "Староста" отправлена')
-
+        await message.answer(
+            '✅ Ваша заявка на роль "Староста" отправлена. Ожидайте решения.'
+        )
     else:
-        await message.answer(f"❌ {json_response['detail']}")
+        await message.answer(f"❌ Ошибка: {json_response['detail']}")
 
 
 @router.callback_query(F.data.startswith("groups_pagination:"))
@@ -163,34 +167,33 @@ async def groups_pagination(callback: CallbackQuery, state: FSMContext):
             await callback.answer()
 
             await callback.message.bot.send_message(
-                callback.message.chat.id, "✅ Закрыто", reply_markup=kb.ungroup_main
+                callback.message.chat.id,
+                "❌ Окно выбора групп закрыто.",
+                reply_markup=kb.ungroup_main,
             )
-            return
+        else:
+            _, action, offset_str = callback.data.split(":")
+            offset = int(offset_str)
+            limit = 10
 
-        _, action, offset_str = callback.data.split(":")
-        offset = int(offset_str)
-        limit = 10
+            if action == "next":
+                offset += limit
+            elif action == "prev":
+                if offset == 0:
+                    await callback.answer("Вы на первой странице.", show_alert=True)
+                else:
+                    offset = max(0, offset - limit)
+            status, groups = await response.get_groups(
+                without_application=True, token=token, limit=limit, offset=offset
+            )
 
-        if action == "next":
-            offset += limit
-        elif action == "prev":
-            if offset == 0:
-                await callback.answer("Вы на первой странице.", show_alert=True)
-                return
-            offset = max(0, offset - limit)
+            if status == 204:
+                await callback.answer("Групп больше нет", show_alert=True)
+            else:
+                await callback.message.edit_text(
+                    "Выберите группу",
+                    parse_mode="Markdown",
+                    reply_markup=await kb.inline_groups(groups, offset=offset),
+                )
 
-        status, groups = await response.get_groups(
-            without_application=True, token=token, limit=limit, offset=offset
-        )
-
-        if status == 204 or not groups:
-            await callback.answer("Групп больше нет", show_alert=True)
-            return
-
-        await callback.message.edit_text(
-            "Выберите группу",
-            parse_mode="Markdown",
-            reply_markup=await kb.inline_groups(groups, offset=offset),
-        )
-
-        await callback.answer()
+                await callback.answer()

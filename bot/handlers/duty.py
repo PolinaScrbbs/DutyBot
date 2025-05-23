@@ -9,13 +9,24 @@ from .. import keyboards as kb
 from .. import utils as ut
 
 
+async def create_duties_msg(prefix: str, duties):
+    msg = prefix
+    for duty in duties:
+        msg += (
+            f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
+            f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
+            f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
+        )
+    return msg
+
+
 @router.message(lambda message: message.text == "Дежурства")
 async def group_menu(message: Message, state: FSMContext):
     user_data = await state.get_data()
     token = await ut.get_user_token(message, user_data)
 
     if token:
-        msg = "Выберите пункт из меню"
+        msg = "📋 Выберите нужный пункт из меню дежурств:"
         keyboard = kb.duty_menu
 
         await message.answer(msg, reply_markup=keyboard)
@@ -42,19 +53,21 @@ async def get_attendant(message: Message, state: FSMContext):
             try:
                 try:
                     await message.edit_text(
-                        f"👷🏿*{attendants[0]['full_name']}* 👷🏿*{attendants[1]['full_name']}*",
+                        f"👷🏿 Назначены дежурные:\n*{attendants[0]['full_name']}* и *{attendants[1]['full_name']}*",
                         reply_markup=kb.remap,
                         parse_mode="Markdown",
                     )
                 except Exception:
                     await message.answer(
-                        f"👷🏿*{attendants[0]['full_name']}* 👷🏿*{attendants[1]['full_name']}*",
+                        f"👷🏿 Назначены дежурные:\n*{attendants[0]['full_name']}* и *{attendants[1]['full_name']}*",
                         reply_markup=kb.remap,
                         parse_mode="Markdown",
                     )
             except Exception:
                 await message.edit_text(
-                    "❗Куда гонишь?", reply_markup=kb.remap, parse_mode="Markdown"
+                    "❗ Ошибка при назначении дежурных. Попробуйте ещё раз.",
+                    reply_markup=kb.remap,
+                    parse_mode="Markdown",
                 )
 
 
@@ -68,7 +81,7 @@ async def get_current_attendant(message: Message, state: FSMContext):
 
         if status == 200:
             await message.answer(
-                f"**Текущие дежурные**:\n👷🏿{attendants[0]['full_name']}\n👷🏿{attendants[1]['full_name']}",
+                f"🛡️ *Текущие дежурные*:\n👷🏿 {attendants[0]['full_name']}\n👷🏿 {attendants[1]['full_name']}",
                 parse_mode="Markdown",
             )
 
@@ -90,7 +103,7 @@ async def remap(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "assign")
 async def assign(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
-    token = await ut.get_user_token(message, user_data)
+    token = await ut.get_user_token(callback.message, user_data)
 
     if token:
         attendants_id = user_data["attendants_id"]
@@ -98,12 +111,14 @@ async def assign(callback: CallbackQuery, state: FSMContext):
         status = await response.post_duty(token, attendants_id)
 
         if status == 201:
-            await callback.message.edit_text("✅Дежурные установлены")
+            await callback.message.edit_text("✅ Дежурные успешно установлены.")
             await ut.clear_user_data(
                 state, token, user_data["user"], user_data["group"]
             )
         else:
-            await callback.message.edit_text("✅Произошла неизвестная ошибка")
+            await callback.message.edit_text(
+                "❌ Произошла ошибка при установке дежурных."
+            )
 
 
 @router.message(lambda message: message.text == "Список дежурств")
@@ -118,25 +133,14 @@ async def duty_list(message: Message, state: FSMContext):
         status, duties = await response.get_duties(token, limit=limit, offset=offset)
 
         if status == 204:
-            await message.answer("Список дежурств пуст", parse_mode="Markdown")
+            await message.answer("📭 Список дежурств пока пуст.", parse_mode="Markdown")
         else:
-            msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
+            msg = await ut.create_duties_msg("🧹 *Список дежурств:*\n\n", duties)
             await message.answer(
                 msg,
                 parse_mode="Markdown",
                 reply_markup=kb.get_pagination_kb("duties_pagination", offset),
             )
-
-
-async def create_duties_msg(prefix: str, duties):
-    msg = prefix
-    for duty in duties:
-        msg += (
-            f"*@{duty['attendant']['username']}* ({duty['attendant']['full_name']})\n"
-            f"Дежурил(а) *{duty['attendant']['duties_count']} раз(а)*\n"
-            f"Последнее дежурство: *{duty['attendant']['last_duty']}*\n\n"
-        )
-    return msg
 
 
 @router.message(lambda message: message.text == "Количество дежурств")
@@ -153,9 +157,9 @@ async def duty_count(message: Message, state: FSMContext):
         )
 
         if status == 204:
-            await message.answer("Список дежурств пуст", parse_mode="Markdown")
+            await message.answer("📭 Список дежурств пуст.", parse_mode="Markdown")
         else:
-            msg = await create_duties_msg("🧹*Количество дежурств:*\n\n", duties_count)
+            msg = await create_duties_msg("📊 *Количество дежурств:*\n\n", duties_count)
             await message.answer(
                 msg,
                 parse_mode="Markdown",
@@ -174,7 +178,7 @@ async def duties_pagination(callback: CallbackQuery, state: FSMContext):
             await callback.answer()
 
             await callback.message.bot.send_message(
-                callback.message.chat.id, "✅ Закрыто", reply_markup=kb.duty_menu
+                callback.message.chat.id, "✅ Меню закрыто.", reply_markup=kb.duty_menu
             )
             return
 
@@ -187,7 +191,7 @@ async def duties_pagination(callback: CallbackQuery, state: FSMContext):
         elif action == "prev":
             if offset == 0:
                 await callback.answer(
-                    "Вы на первой странице, назад уже не пойти.", show_alert=True
+                    "⚠️ Вы на первой странице, назад уже некуда.", show_alert=True
                 )
                 return
             offset = max(0, offset - limit)
@@ -195,10 +199,10 @@ async def duties_pagination(callback: CallbackQuery, state: FSMContext):
         status, duties = await response.get_duties(token, limit=limit, offset=offset)
 
         if status == 204 or not duties:
-            await callback.answer("Дежурств больше нет", show_alert=True)
+            await callback.answer("ℹ️ Дежурств больше нет.", show_alert=True)
             return
 
-        msg = await ut.create_duties_msg("🧹*Дежурства:*\n\n", duties)
+        msg = await ut.create_duties_msg("🧹 *Дежурства:*\n\n", duties)
 
         await callback.message.edit_text(
             msg,
@@ -220,7 +224,7 @@ async def handle_duties_pagination(callback: CallbackQuery, state: FSMContext):
             await callback.answer()
 
             await callback.message.bot.send_message(
-                callback.message.chat.id, "✅ Закрыто", reply_markup=kb.duty_menu
+                callback.message.chat.id, "✅ Меню закрыто.", reply_markup=kb.duty_menu
             )
             return
 
@@ -233,7 +237,7 @@ async def handle_duties_pagination(callback: CallbackQuery, state: FSMContext):
         elif action == "prev":
             if offset == 0:
                 await callback.answer(
-                    "Вы на первой странице, назад уже не пойти.", show_alert=True
+                    "⚠️ Вы на первой странице, назад уже некуда.", show_alert=True
                 )
                 return
             offset = max(0, offset - limit)
@@ -243,10 +247,10 @@ async def handle_duties_pagination(callback: CallbackQuery, state: FSMContext):
         )
 
         if status == 204 or not duties_count:
-            await callback.answer("Дежурств больше нет", show_alert=True)
+            await callback.answer("ℹ️ Дежурств больше нет.", show_alert=True)
             return
 
-        msg = await create_duties_msg("🧹*Количество дежурств:*\n\n", duties_count)
+        msg = await create_duties_msg("📊 *Количество дежурств:*\n\n", duties_count)
 
         await callback.message.edit_text(
             msg,

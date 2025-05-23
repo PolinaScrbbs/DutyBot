@@ -29,11 +29,15 @@ duty_menu = ReplyKeyboardMarkup(
 remap = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="🔄", callback_data="remap_0"),
-            InlineKeyboardButton(text="🔄", callback_data="remap_1"),
+            InlineKeyboardButton(text="🔄 Обновить 1️⃣", callback_data="remap_0"),
+            InlineKeyboardButton(text="🔄 Обновить 2️⃣", callback_data="remap_1"),
         ],
-        [InlineKeyboardButton(text="✅Назначить", callback_data="assign")],
-        [InlineKeyboardButton(text="❌Отмена", callback_data="cancel")],
+        [
+            InlineKeyboardButton(
+                text="✅ Подтвердить назначение", callback_data="assign"
+            )
+        ],
+        [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel")],
     ],
     row_width=1,
 )

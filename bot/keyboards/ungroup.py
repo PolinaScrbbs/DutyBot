@@ -46,10 +46,11 @@ async def create_specializations_keyboard(
     for j in range(0, len_range, 2):
         keyboard.row(
             InlineKeyboardButton(
-                text=specializations[j], callback_data=f"{prefix}{specializations[j]}"
+                text=f"🎓 {specializations[j]}",
+                callback_data=f"{prefix}{specializations[j]}",
             ),
             InlineKeyboardButton(
-                text=specializations[j + 1],
+                text=f"🎓 {specializations[j + 1]}",
                 callback_data=f"{prefix}{specializations[j+1]}",
             ),
         )
@@ -57,11 +58,12 @@ async def create_specializations_keyboard(
     if len(specializations) % 2 != 0:
         keyboard.row(
             InlineKeyboardButton(
-                text=specializations[-1], callback_data=f"{prefix}{specializations[-1]}"
+                text=f"🎓 {specializations[-1]}",
+                callback_data=f"{prefix}{specializations[-1]}",
             )
         )
 
-    keyboard.row(InlineKeyboardButton(text="❌", callback_data="cancel"))
+    keyboard.row(InlineKeyboardButton(text="❌ Отмена", callback_data="cancel"))
 
     return keyboard.as_markup()
 
@@ -70,10 +72,10 @@ async def course_number(prefix: str = "course_number_") -> InlineKeyboardMarkup:
     course_number_markup = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="1 курс", callback_data=f"{prefix}1"),
-                InlineKeyboardButton(text="2 курс", callback_data=f"{prefix}2"),
-                InlineKeyboardButton(text="3 курс", callback_data=f"{prefix}3"),
-                InlineKeyboardButton(text="4 курс", callback_data=f"{prefix}4"),
+                InlineKeyboardButton(text="1️⃣ 1 курс", callback_data=f"{prefix}1"),
+                InlineKeyboardButton(text="2️⃣ 2 курс", callback_data=f"{prefix}2"),
+                InlineKeyboardButton(text="3️⃣ 3 курс", callback_data=f"{prefix}3"),
+                InlineKeyboardButton(text="4️⃣ 4 курс", callback_data=f"{prefix}4"),
             ]
         ]
     )
@@ -89,11 +91,11 @@ async def inline_groups(groups_list, offset: int = 0, tag: str = "groups_paginat
     for j in range(0, len_range, 2):
         keyboard.row(
             InlineKeyboardButton(
-                text=groups_list[j]["title"],
+                text=f"👥 {groups_list[j]['title']}",
                 callback_data=f"group_{groups_list[j]['id']}_{groups_list[j]['title']}",
             ),
             InlineKeyboardButton(
-                text=groups_list[j + 1]["title"],
+                text=f"👥 {groups_list[j + 1]['title']}",
                 callback_data=f"group_{groups_list[j + 1]['id']}_{groups_list[j + 1]['title']}",
             ),
         )
@@ -101,14 +103,14 @@ async def inline_groups(groups_list, offset: int = 0, tag: str = "groups_paginat
     if len(groups_list) % 2 != 0:
         keyboard.row(
             InlineKeyboardButton(
-                text=groups_list[-1]["title"],
+                text=f"👥 {groups_list[-1]['title']}",
                 callback_data=f"group_{groups_list[-1]['id']}_{groups_list[-1]['title']}",
             )
         )
 
     keyboard.row(
-        InlineKeyboardButton(text="◀ Назад", callback_data=f"{tag}:prev:{offset}"),
-        InlineKeyboardButton(text="Вперёд ▶", callback_data=f"{tag}:next:{offset}"),
+        InlineKeyboardButton(text="◀️ Назад", callback_data=f"{tag}:prev:{offset}"),
+        InlineKeyboardButton(text="Вперёд ▶️", callback_data=f"{tag}:next:{offset}"),
     )
     keyboard.row(InlineKeyboardButton(text="❌ Закрыть", callback_data=f"{tag}:close"))
 

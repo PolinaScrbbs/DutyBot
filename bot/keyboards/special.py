@@ -30,10 +30,10 @@ def get_pagination_kb(tag: str, offset: int) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="◀ Назад", callback_data=f"{tag}:prev:{offset}"
+                    text="◀️ Назад", callback_data=f"{tag}:prev:{offset}"
                 ),
                 InlineKeyboardButton(
-                    text="Вперёд ▶", callback_data=f"{tag}:next:{offset}"
+                    text="Вперёд ▶️", callback_data=f"{tag}:next:{offset}"
                 ),
             ],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data=f"{tag}:close")],

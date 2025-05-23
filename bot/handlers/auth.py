@@ -11,15 +11,14 @@ from .. import states as st
 @router.message(lambda message: message.text == "Регистрация")
 async def get_full_name(message: Message, state: FSMContext):
     await state.set_state(st.Registration.full_name)
-    await message.answer("👨‍🎓Введите ФИО", reply_markup=kb.cancel)
+    await message.answer("👨‍🎓 Пожалуйста, введите ваше ФИО", reply_markup=kb.cancel)
 
 
 @router.message(st.Registration.full_name)
 async def get_password(message: Message, state: FSMContext):
     await state.update_data({"full_name": message.text})
-
     await state.set_state(st.Registration.password)
-    await message.answer("🔑Создайте пароль", reply_markup=kb.cancel)
+    await message.answer("🔑 Придумайте пароль", reply_markup=kb.cancel)
 
 
 @router.message(st.Registration.password)
@@ -27,9 +26,8 @@ async def get_confirm_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     user_data["password"] = message.text
     await state.update_data(user_data)
-
     await state.set_state(st.Registration.confirm_password)
-    await message.answer("🔑Подтвердите пароль ", reply_markup=kb.cancel)
+    await message.answer("🔑 Подтвердите пароль, пожалуйста", reply_markup=kb.cancel)
 
 
 @router.message(st.Registration.confirm_password)
@@ -49,16 +47,20 @@ async def registration(message: Message, state: FSMContext):
     await state.clear()
     if status == 201:
         await message.answer(
-            f"✅ *Пользователь зарегистрирован*", "Markdown", reply_markup=kb.start
+            "✅ *Регистрация прошла успешно!*\nДобро пожаловать!",
+            parse_mode="Markdown",
+            reply_markup=kb.start,
         )
     else:
-        await message.answer(f"❌ *{json_response['detail'].upper()}*", "Markdown")
+        await message.answer(
+            f"⚠️ *Ошибка: {json_response['detail'].upper()}*", parse_mode="Markdown"
+        )
 
 
 @router.message(lambda message: message.text == "Авторизация")
 async def authorization_start(message: Message, state: FSMContext):
     await state.set_state(st.Authorization.password)
-    await message.answer("🔑Введите пароль", reply_markup=kb.cancel)
+    await message.answer("🔑 Введите ваш пароль для входа", reply_markup=kb.cancel)
 
 
 @router.message(st.Authorization.password)
@@ -74,5 +76,7 @@ async def authorization(message: Message, state: FSMContext):
         await cmd_start(message, state)
     else:
         await message.answer(
-            f"❌ *{json_response['detail'].upper()}*", "Markdown", reply_markup=kb.start
+            f"⚠️ *Ошибка авторизации: {json_response['detail'].upper()}*",
+            parse_mode="Markdown",
+            reply_markup=kb.start,
         )

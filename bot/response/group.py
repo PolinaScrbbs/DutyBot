@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional
 
 import aiohttp
 
@@ -29,7 +29,7 @@ async def post_group(title: str, specialization: str, course_number: int, token:
 
 async def get_groups(
     offset: int = 0, limit: int = 10, without_application: bool = False, token=str
-) -> Tuple[int, list]:
+) -> Tuple[int, Optional[list]]:
 
     params = {
         "skip": offset,
@@ -41,7 +41,10 @@ async def get_groups(
         async with session.get(
             "/groups", headers={"Authorization": f"Bearer {token}"}, params=params
         ) as response:
-            return response.status, await response.json()
+            if response.status != 204:
+                return response.status, await response.json()
+            else:
+                return response.status, None
 
 
 async def get_group(token: str) -> Tuple[int, dict]:

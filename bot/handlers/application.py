@@ -26,11 +26,13 @@ async def group_applications_list(callback: CallbackQuery, state: FSMContext):
         )
 
         if status == 204:
-            await callback.message.edit_text("Список заявок пуст")
+            await callback.message.edit_text(
+                "📭 Список заявок пуст. Пока что никто не подал заявку."
+            )
 
         else:
             await callback.message.edit_text(
-                "*Заявки*",
+                "📋 *Текущие заявки*",
                 parse_mode="Markdown",
                 reply_markup=await kb.inline_applications(applications),
             )
@@ -51,7 +53,7 @@ async def application(callback: CallbackQuery, state: FSMContext):
         first_name, last_name = sending["full_name"].split()[:2]
 
         await callback.message.edit_text(
-            f"Заявка @*{sending['username']}* ({first_name} {last_name})",
+            f"📄 Заявка пользователя @*{sending['username']}* ({first_name} {last_name})",
             parse_mode="Markdown",
             reply_markup=await kb.inline_application(application_dict),
         )
@@ -69,9 +71,9 @@ async def update_application(callback: CallbackQuery, state: FSMContext):
     if token:
         await response.put_application(token, application_id, update_status)
 
-        msg = "✅ Заявка отклонена"
+        msg = "⚠️ Заявка отклонена"
         if update_status == "Принят":
-            msg = "✅ Заявка принята"
+            msg = "✅ Заявка успешно принята"
 
         await callback.message.edit_text(msg)
 

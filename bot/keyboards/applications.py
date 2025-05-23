@@ -17,11 +17,11 @@ async def inline_applications(applications):
 
         keyboard.row(
             InlineKeyboardButton(
-                text=f"@{applications[j]['sending']['username']} ({first_name} {last_name})",
+                text=f"👤 @{applications[j]['sending']['username']} ({first_name} {last_name})",
                 callback_data=f"application_{applications[j]['id']}_{applications[j]['sending']['id']}",
             ),
             InlineKeyboardButton(
-                text=f"@{applications[j + 1]['sending']['username']} ({second_first_name} {second_last_name})",
+                text=f"👤 @{applications[j + 1]['sending']['username']} ({second_first_name} {second_last_name})",
                 callback_data=f"application_{applications[j + 1]['id']}_{applications[j + 1]['sending']['id']}",
             ),
         )
@@ -31,12 +31,12 @@ async def inline_applications(applications):
 
         keyboard.row(
             InlineKeyboardButton(
-                text=f"@{applications[-1]['sending']['username']} ({first_name} {last_name})",
+                text=f"👤 @{applications[-1]['sending']['username']} ({first_name} {last_name})",
                 callback_data=f"application_{applications[-1]['id']}_{applications[-1]['sending']['id']}",
             )
         )
 
-    keyboard.row(InlineKeyboardButton(text="Назад", callback_data="back"))
+    keyboard.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
 
     return keyboard.as_markup()
 
@@ -46,15 +46,15 @@ async def inline_application(application):
 
     keyboard.row(
         InlineKeyboardButton(
-            text="Принять",
+            text="✅ Принять заявку",
             callback_data=f"update_application_{application['id']}_Принят",
         ),
         InlineKeyboardButton(
-            text="Отклонить",
+            text="❌ Отклонить заявку",
             callback_data=f"update_application_{application['id']}_Отклонен",
         ),
     )
 
-    keyboard.row(InlineKeyboardButton(text="❌ Закрыть", callback_data="close"))
+    keyboard.row(InlineKeyboardButton(text="❌ Закрыть окно", callback_data="close"))
 
     return keyboard.as_markup()

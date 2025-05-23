@@ -9,7 +9,7 @@ from .. import keyboards as kb
 from ..utils import get_user_token
 
 
-@router.message(lambda message: re.match(r"^Заявки\(\d+\)$", message.text))
+@router.message(lambda message: re.match(r"^Заявки \(\d+\)$", message.text))
 async def admin_applications(message: Message, state: FSMContext):
     user_data = await state.get_data()
     token = await get_user_token(message, user_data)
@@ -25,21 +25,21 @@ async def admin_applications(message: Message, state: FSMContext):
             match status:
                 case 403:
                     await message.answer(
-                        "У вас нет прав на просмотр заявок",
+                        "❌ К сожалению, у вас нет доступа к просмотру заявок."
                     )
                 case 204:
                     await message.answer(
-                        "Список заявок пуст",
+                        "📭 Пока что заявок нет. Вы можете проверить позже."
                     )
                 case 200:
                     await state.update_data(applications=applications)
                 case _:
                     await message.answer(
-                        "Произошла ошибка при получении заявок",
+                        "⚠️ Произошла непредвиденная ошибка при получении заявок. Попробуйте снова позже."
                     )
         else:
             await message.answer(
-                "*Заявки*",
+                "📋 *Список заявок*",
                 parse_mode="Markdown",
                 reply_markup=await kb.inline_applications(applications),
             )

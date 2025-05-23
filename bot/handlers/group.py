@@ -26,7 +26,7 @@ async def group_menu(message: Message, state: FSMContext):
         status, group = await response.get_group(token)
 
         if status != 200:
-            await message.answer("Вы не состоите в группе")
+            await message.answer("⚠️ Вы пока не состоите ни в одной группе.")
         else:
             user_data["group"] = group
             await state.update_data(user_data)
@@ -42,7 +42,7 @@ async def group_menu(message: Message, state: FSMContext):
                 applications_count = len(applications)
 
             await message.answer(
-                f"*{group['title'].upper()}*",
+                f"📚 *{group['title'].upper()}*",
                 parse_mode="Markdown",
                 reply_markup=await kb.group_menu(applications_count),
             )
@@ -57,10 +57,10 @@ async def students(callback: CallbackQuery, state: FSMContext):
         status, students_list = await response.get_students(token)
 
         if status == 204:
-            await callback.message.edit_text("Список студентов пуст")
+            await callback.message.edit_text("👥 Список студентов пока пуст.")
         else:
             await callback.message.edit_text(
-                "*Студенты*",
+                "👥 *Студенты группы*",
                 parse_mode="Markdown",
                 reply_markup=await kb.inline_students(students_list),
             )
@@ -81,7 +81,7 @@ async def student(callback: CallbackQuery, state: FSMContext):
         student_first_name, student_last_name = student_dict["full_name"].split()[:2]
 
         await callback.message.edit_text(
-            f"*@{student_dict['username']}*\n{student_first_name} {student_last_name}",
+            f"👤 *@{student_dict['username']}*\n{student_first_name} {student_last_name}",
             parse_mode="Markdown",
             reply_markup=await kb.inline_student(student_dict),
         )
@@ -99,7 +99,7 @@ async def student_kick(callback: CallbackQuery, state: FSMContext):
         await response.kick_student(student_id, token)
 
         await callback.message.edit_text(
-            "✅ Пользователь удалён из группы.\nЕго история дежурств очищена",
+            "✅ Пользователь успешно удалён из группы.\nИстория его дежурств очищена.",
         )
 
         await asyncio.sleep(3)
@@ -114,7 +114,8 @@ async def group_settings(callback: CallbackQuery, state: FSMContext):
     if token:
         group = user_data.get("group")
         await callback.message.edit_text(
-            f"*Название группы:* {group['title']}\n"
+            f"⚙️ *Информация о группе:*\n\n"
+            f"*Название:* {group['title']}\n"
             f"*Специальность:* {group['specialization']}\n"
             f"*Курс:* {group['course_number']} курс\n"
             f"*Дата создания:* {group['created_at'][:10]}",
@@ -129,21 +130,21 @@ async def handle_group_update(callback: CallbackQuery, state: FSMContext):
 
     match action:
         case "title":
-            await callback.message.edit_text(f"Введите название группы")
+            await callback.message.edit_text("✏️ Введите новое название группы:")
             await state.set_state(st.GroupUpdate.title)
         case "specialization":
             user_data = await state.get_data()
             token = await ut.get_user_token(callback, user_data)
             status, specializations = await response.get_specializations(token)
             await callback.message.edit_text(
-                f"Выберите специальность",
+                "📋 Выберите новую специальность:",
                 reply_markup=await kb.create_specializations_keyboard(
                     specializations, "up_spec:"
                 ),
             )
         case "course_number":
             await callback.message.edit_text(
-                f"Выберите номер курса",
+                "🔢 Выберите новый номер курса:",
                 reply_markup=await kb.course_number("up_course_number:"),
             )
 
@@ -159,9 +160,9 @@ async def update_group_title(message: Message, state: FSMContext):
     await ut.clear_user_data(state, token, user_data["user"], user_data["group"])
 
     if status == 200:
-        await message.answer("✅ Название группы обновлено.")
+        await message.answer("✅ Название группы успешно обновлено.")
     else:
-        await message.answer(f"❌ Не удалось обновить название группы: {err['detail']}")
+        await message.answer(f"❌ Ошибка при обновлении названия: {err['detail']}")
 
     await group_menu(message, state)
 
@@ -175,10 +176,10 @@ async def update_group_specialization(callback: CallbackQuery, state: FSMContext
     status, err = await response.patch_group(token, {"specialization": specialization})
 
     if status == 200:
-        await callback.message.edit_text("✅ Специальность обновлена.")
+        await callback.message.edit_text("✅ Специальность успешно обновлена.")
     else:
         await callback.message.edit_text(
-            f"❌ Не удалось обновить специальность: {err['detail']}"
+            f"❌ Ошибка при обновлении специальности: {err['detail']}"
         )
 
     await group_menu(callback.message, state)
@@ -193,10 +194,10 @@ async def update_group_course(callback: CallbackQuery, state: FSMContext):
     status, err = await response.patch_group(token, {"course_number": course})
 
     if status == 200:
-        await callback.message.edit_text("✅ Номер курса обновлён.")
+        await callback.message.edit_text("✅ Номер курса успешно обновлён.")
     else:
         await callback.message.edit_text(
-            f"❌ Не удалось обновить номер курса: {err['detail']}"
+            f"❌ Ошибка при обновлении номера курса: {err['detail']}"
         )
 
     await group_menu(callback.message, state)
@@ -211,9 +212,10 @@ async def group_settings(callback: CallbackQuery, state: FSMContext):
         user_data["user"]["group_id"] = None
         await ut.clear_user_data(state, token, user_data["user"], None)
         if status == 200:
-            await callback.message.edit_text(f"✅ Группа удалена.")
+            await callback.message.edit_text("✅ Группа успешно удалена.")
             await callback.message.answer(
-                f"С возвращением, @{callback.message.from_user.username}👋\nВыбери пункт из меню🔍",
+                f"👋 Добро пожаловать обратно, @{callback.message.from_user.username}!\n"
+                f"Выберите пункт из меню 🔍",
                 reply_markup=kb.ungroup_main,
             )
 
