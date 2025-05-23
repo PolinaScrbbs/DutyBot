@@ -28,7 +28,9 @@ async def application_validate(
             group_exists = group_exists.scalar()
 
             if not group_exists:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Группа не найдена")
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, detail="Группа не найдена"
+                )
 
             return group_id
 
@@ -71,9 +73,7 @@ async def create_application(
         application_type == ApplicationType.GROUP_JOIN
         and current_user.group_id is not None
     ):
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="Вы уже состоите в группе"
-        )
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Вы уже состоите в группе")
 
     group_id = await application_validate(session, application_type, group_id)
 

@@ -71,5 +71,5 @@ async def get_current_attendants(
     current_attendants = await qr.get_current_attendants(session, group_id)
     return {
         "message": "🟢 Текущие дежурные получены успешно",
-        "attendants": current_attendants
+        "attendants": current_attendants,
     }

@@ -47,7 +47,8 @@ class RegistrationValidator:
             )
         if not self.username or self.username == "":
             raise ValidateError(
-                "Имя пользователя не может быть пустым", status.HTTP_422_UNPROCESSABLE_ENTITY
+                "Имя пользователя не может быть пустым",
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         if not (4 <= len(self.username) <= 20):
             raise ValidateError(

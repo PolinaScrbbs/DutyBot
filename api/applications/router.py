@@ -14,6 +14,7 @@ from .schemes import ApplicationForm, ApplicationWithSending
 
 router = APIRouter()
 
+
 @router.post("/applications", response_class=JSONResponse)
 async def post_application(
     application_data: ApplicationForm,
@@ -27,6 +28,7 @@ async def post_application(
         status_code=status.HTTP_201_CREATED,
         content={"message": "✅ Заявка успешно отправлена"},
     )
+
 
 @router.get("/applications", response_model=List[ApplicationWithSending])
 async def get_applications(
@@ -47,11 +49,10 @@ async def get_applications(
     )
 
     if not applications:
-        raise HTTPException(
-            status.HTTP_204_NO_CONTENT, detail="Список заявок пуст"
-        )
+        raise HTTPException(status.HTTP_204_NO_CONTENT, detail="Список заявок пуст")
 
     return applications
+
 
 @router.get("/application/{application_id}", response_model=ApplicationWithSending)
 async def get_application_by_id(
@@ -72,6 +73,7 @@ async def get_application_by_id(
             )
 
     return application
+
 
 @router.put("/application/{application_id}")
 async def update_application(
