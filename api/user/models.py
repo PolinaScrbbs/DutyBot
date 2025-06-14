@@ -12,7 +12,6 @@ from sqlalchemy import (
     func,
     Enum,
 )
-from sqlalchemy import select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 from enum import Enum as BaseEnum
@@ -20,7 +19,6 @@ from enum import Enum as BaseEnum
 from ..config import config as conf
 from ..database import Base
 from .schemes import BaseUser
-from ..duty.models import Duty
 
 
 class Role(BaseEnum):
@@ -98,11 +96,11 @@ class User(Base):
         last_name, first_name, middle_name = name_parts
         return f"{last_name} {first_name[0]}. {middle_name[0]}."
 
-    async def duties_count(self, session: AsyncSession) -> int:
-        result = await session.execute(
-            select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
-        )
-        return result.scalar_one()
+    # async def duties_count(self, session: AsyncSession) -> int:
+    #     result = await session.execute(
+    #         select(func.count(Duty.id)).where(Duty.attendant_id == self.id)
+    #     )
+    #     return result.scalar_one()
 
     # async def last_duty(self, session: AsyncSession) -> datetime:
     #     result = await session.execute(
