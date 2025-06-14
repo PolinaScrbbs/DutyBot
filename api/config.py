@@ -17,7 +17,7 @@ class Config:
 
         # api
         self.secret_key = os.getenv("SECRET_KEY")
-        self.token_lifetime = int(os.getenv("TOKEN_LIFETIME"))
+        self.token_lifetime = int(os.getenv("TOKEN_LIFETIME", "3600"))
 
         # database
         self.host = os.getenv("HOST", "localhost")
