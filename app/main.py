@@ -1,4 +1,3 @@
-import locale
 from datetime import datetime
 import os
 import roman
@@ -17,6 +16,16 @@ app = Quart(
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_FOLDER = os.path.join(BASE_DIR, "media")
 
+# Русские названия месяцев для ручного форматирования
+RUSSIAN_MONTHS = [
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря"
+]
+
+def format_russian_date(iso_date):
+    """Форматирует дату в формате 'день месяц годг.' на русском"""
+    date_object = datetime.fromisoformat(iso_date)
+    return f"{date_object.day} {RUSSIAN_MONTHS[date_object.month - 1]} {date_object.year}г."
 
 @app.route("/profile")
 async def profile():
@@ -31,25 +40,22 @@ async def profile():
             "role": "Студент",
             "created_at": datetime.now().isoformat(),
             "group_id": None,
-            "avatar_url": "media\\avatars\\default.jpg",
+            "avatar_url": "media/avatars/default.jpg",  # Исправлен слеш для кроссплатформенности
         }
     else:
         status, user = await get_user(username, token)
         if not status or not user:
-            # Если токен недействителен или пользователь не найден
             user = {
                 "username": "guest",
                 "full_name": "Иванов Иван Иванович",
                 "role": "Студент",
                 "created_at": datetime.now().isoformat(),
                 "group_id": None,
-                "avatar_url": "media\\avatars\\default.jpg",
+                "avatar_url": "media/avatars/default.jpg",
             }
 
-    locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
-    created_at = user["created_at"]
-    date_object = datetime.fromisoformat(created_at)
-    user["created_at"] = date_object.strftime("%d %B %Yг.")
+    # Форматируем дату без использования locale
+    user["created_at"] = format_russian_date(user["created_at"])
 
     emojis = {
         "Студент": "👨‍🎓",
@@ -66,9 +72,7 @@ async def profile():
         try:
             status, group = await get_group(token)
             group["course_number_roman"] = roman.toRoman(group["course_number"])
-            created_at = group["created_at"]
-            date_object = datetime.fromisoformat(created_at)
-            group["created_at"] = date_object.strftime("%d %B %Yг.")
+            group["created_at"] = format_russian_date(group["created_at"])
             context["group"] = group
         except Exception:
             pass
@@ -93,9 +97,7 @@ async def profile():
             groups_list = []
             if groups:
                 for group in groups:
-                    created_at = group["created_at"]
-                    date_object = datetime.fromisoformat(created_at)
-                    group["created_at"] = date_object.strftime("%d %B %Yг.")
+                    group["created_at"] = format_russian_date(group["created_at"])
                     group["creator"] = await formatted_full_name(
                         group["creator"]["full_name"]
                     )
@@ -118,7 +120,6 @@ async def profile():
 
 @app.route("/media/<path:filename>")
 async def media(filename):
-    print(MEDIA_FOLDER)
     return await send_from_directory(MEDIA_FOLDER, filename)
 
 
