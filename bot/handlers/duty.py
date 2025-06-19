@@ -48,10 +48,8 @@ async def get_attendant(message: Message, state: FSMContext):
         if status == 204:
             await message.answer(
                 "📭 Пока что нет доступных дежурных. Попробуйте позже.",
-                reply_markup=kb.remap,
             )
-            return
-        if status == 200:
+        elif status == 200:
             try:
                 try:
                     user_data["attendants_id"] = [attendants[0]["id"], attendants[1]["id"]]
@@ -82,7 +80,11 @@ async def get_current_attendant(message: Message, state: FSMContext):
 
     if token:
         status, attendants = await response.get_current_attendants(token)
-        if status == 200:
+        if status == 204:
+            await message.answer(
+                "📭 Пока что нет назначенных дежурных. Попробуйте позже.",
+            )
+        elif status == 200:
             await message.answer(
                 f"🛡️ *Текущие дежурные*:\n👷🏿 {attendants[0]['full_name']}\n👷🏿 {attendants[1]['full_name']}",
                 parse_mode="Markdown",

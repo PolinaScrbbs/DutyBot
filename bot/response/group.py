@@ -63,7 +63,7 @@ async def get_students(token: str) -> Tuple[int, List[dict]]:
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
             status = response.status
-            if status == 204:
+            if status in [204, 404]:
                 return status, None
 
             return status, await response.json()

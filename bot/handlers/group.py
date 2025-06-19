@@ -56,7 +56,7 @@ async def students(callback: CallbackQuery, state: FSMContext):
     if token:
         status, students_list = await response.get_students(token)
 
-        if status == 204:
+        if status in [204, 404]:
             await callback.message.edit_text("👥 Список студентов пока пуст.")
         else:
             await callback.message.edit_text(
