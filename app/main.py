@@ -40,7 +40,7 @@ async def profile():
             "role": "Студент",
             "created_at": datetime.now().isoformat(),
             "group_id": None,
-            "avatar_url": "media/avatars/default.jpg",  # Исправлен слеш для кроссплатформенности
+            "avatar_url": None
         }
     else:
         status, user = await get_user(username, token)
@@ -51,10 +51,9 @@ async def profile():
                 "role": "Студент",
                 "created_at": datetime.now().isoformat(),
                 "group_id": None,
-                "avatar_url": "media/avatars/default.jpg",
+                "avatar_url": None,
             }
 
-    # Форматируем дату без использования locale
     user["created_at"] = format_russian_date(user["created_at"])
 
     emojis = {

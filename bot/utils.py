@@ -54,7 +54,7 @@ async def create_duties_msg(initial_line: str, duties: dict) -> str:
     return msg
 
 
-async def get_user_avatar(bot: Bot, user_id: int) -> str:
+async def get_user_avatar(bot: Bot, user_id: int) -> Optional[str]:
     photos = await bot.get_user_profile_photos(user_id, 0, 1)
     if photos.total_count > 0:
         photo = photos.photos[0][-1]
@@ -78,5 +78,5 @@ async def get_user_avatar(bot: Bot, user_id: int) -> str:
                         f.write(await resp.read())
                     return path
 
-    default_avatar_path = os.path.join(conf.media_folder, "avatars", "default.jpg")
-    return default_avatar_path if os.path.exists(default_avatar_path) else None
+    default_avatar_path = None
+    return default_avatar_path

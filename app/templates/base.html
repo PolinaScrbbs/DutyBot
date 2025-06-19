@@ -12,7 +12,11 @@
     <div class="wrapper">
         <div class="profile">
             <div class="profile__info">
-                <img class="profile__img" src="{{ user.avatar_url }}" alt="profileImg">
+				{% if user.avatar_url %}
+					<img class="profile__img" src="{{ user.avatar_url }}" alt="profileImg">
+				{% else %}
+					<img class="profile__img" src="{{ url_for('static', filename='imgs/default.svg') }}" alt="profileImg">
+				{% endif %}
                 <div class="profile__nickname"><span title="{{ user.role }}">{{emoji}}</span>{{user.username}}</div>
                 <div class="profile__name">{{user.full_name}}</div>
                 <div class="profile__date">
