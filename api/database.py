@@ -1,50 +1,42 @@
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from .config import config as conf
-
-# Убедитесь, что в config.py строка подключения формируется правильно:
-# self.database_url = f"postgresql+asyncpg://{self.db_user}:{quote_plus(self.db_user_password)}@{self.host}:{self.port}/{self.db_name}?sslmode=require"
-
-engine = create_async_engine(
+# Создаем синхронный engine с увеличенными таймаутами
+engine = create_engine(
     conf.database_url,
-    echo=True,  # Логирование запросов (можно отключить в продакшене)
-    pool_pre_ping=True,  # Проверка соединений перед использованием
-    pool_size=20,  # Размер пула соединений
-    max_overflow=10,  # Максимальное количество переполнений пула
-    pool_timeout=30,  # Таймаут ожидания соединения
-    pool_recycle=3600,  # Пересоздавать соединения каждый час
+    echo=True,
+    pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=10,
+    pool_timeout=30,  # 30 секунд ожидания соединения из пула
+    pool_recycle=3600,
     connect_args={
-        "statement_cache_size": 0,  # Полностью отключаем кэш
-        "prepared_statement_cache_size": 0,  # Отключаем prepared statements
-        "server_settings": {
-            "jit": "off",
-            "application_name": "your_app_name",
-            "timezone": "UTC"
-        },
-        "ssl": "require",  # Явное указание SSL
-        "timeout": 10,  # Таймаут подключения
-        "command_timeout": 30  # Таймаут выполнения команд
+        "connect_timeout": 30,  # 30 секунд на установку соединения
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5
     }
 )
 
-async_session = async_sessionmaker(
+# Создаем фабрику сессий
+SessionLocal = sessionmaker(
     bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,  # Не сбрасывать объекты после коммита
-    autoflush=False,  # Отключаем авто-сброс
-    future=True  # Используем новый стиль API
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False
 )
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+def get_session():
+    """Генератор сессий (синхронный)"""
+    session = SessionLocal()
+    try:
+        yield session
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 class Base(DeclarativeBase):
     pass
