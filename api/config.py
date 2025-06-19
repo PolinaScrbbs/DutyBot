@@ -26,7 +26,7 @@ class Config:
         self.db_user = os.getenv("DB_USER")
         self.db_user_password = os.getenv("DB_PASSWORD")
 
-        self.database_url = f"postgresql+asyncpg://{self.db_user}:{self.db_user_password}@{self.host}:{self.port}/{self.db_name}??sslmode=require"
+        self.database_url = f"postgresql+asyncpg://{self.db_user}:{self.db_user_password}@{self.host}:{self.port}/{self.db_name}?ssl=require"
 
 
 config = Config()
