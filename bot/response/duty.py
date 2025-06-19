@@ -39,7 +39,7 @@ async def get_current_attendants(token: str) -> Tuple[int, dict]:
             "/current_attendants",
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
-            if response.status in 204:
+            if response.status == 204:
                 return response.status, {}
             if response.status == 200:
                 json = await response.json()
