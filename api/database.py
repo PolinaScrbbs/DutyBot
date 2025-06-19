@@ -4,7 +4,14 @@ from sqlalchemy.orm import DeclarativeBase
 
 from .config import config as conf
 
-engine = create_async_engine(conf.database_url, echo=True)
+engine = create_async_engine(
+    conf.database_url,
+    echo=True,
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0
+    }
+)
 
 async_session = async_sessionmaker(
     bind=engine,
