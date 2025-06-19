@@ -17,7 +17,7 @@ class Config:
 
         # api
         self.secret_key = os.getenv("SECRET_KEY")
-        self.token_lifetime = int(os.getenv("TOKEN_LIFETIME", "3600"))
+        self.token_lifetime = int(os.getenv("TOKEN_LIFETIME"))
 
         # database
         self.host = os.getenv("HOST", "localhost")
@@ -26,7 +26,7 @@ class Config:
         self.db_user = os.getenv("DB_USER")
         self.db_user_password = os.getenv("DB_PASSWORD")
 
-        self.database_url = f"postgresql://{self.db_user}:{self.db_user_password}@{self.host}:{self.port}/{self.db_name}"
+        self.database_url = f"postgresql+asyncpg://{self.db_user}:{self.db_user_password}@{self.host}:{self.port}/{self.db_name}"
 
 
 config = Config()
