@@ -45,13 +45,17 @@ async def get_attendant(message: Message, state: FSMContext):
             user_data["missed_students_id"] = missed_students_id
 
         status, attendants = await response.get_attendants(token, missed_students_id)
-
-        user_data["attendants_id"] = [attendants[0]["id"], attendants[1]["id"]]
-        await state.update_data(user_data)
-
+        if status == 204:
+            await message.answer(
+                "📭 Пока что нет доступных дежурных. Попробуйте позже.",
+                reply_markup=kb.remap,
+            )
+            return
         if status == 200:
             try:
                 try:
+                    user_data["attendants_id"] = [attendants[0]["id"], attendants[1]["id"]]
+                    await state.update_data(user_data)
                     await message.edit_text(
                         f"👷🏿 Назначены дежурные:\n*{attendants[0]['full_name']}* и *{attendants[1]['full_name']}*",
                         reply_markup=kb.remap,

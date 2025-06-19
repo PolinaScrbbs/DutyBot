@@ -155,6 +155,12 @@ async def get_group_attendants(
 
     students = result.all()
 
+    if not students:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="Нет доступных студентов для назначения дежурства.",
+        )
+
     sorted_students = sorted(students, key=lambda x: (x[3], x[4] or datetime.min))
     bottom_students = sorted_students[:2]
 
@@ -178,6 +184,12 @@ async def get_current_attendants(session: AsyncSession, group_id: int):
         .limit(2)
     )
     current_attendants = result.all()
+
+    if not current_attendants:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="Нет текущих дежурных студентов.",
+        )
 
     return [
         BaseStudent(

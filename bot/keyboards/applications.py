@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-async def inline_applications(applications):
+async def inline_applications(applications, with_back=True):
     keyboard = InlineKeyboardBuilder()
 
     len_range = (
@@ -35,8 +35,12 @@ async def inline_applications(applications):
                 callback_data=f"application_{applications[-1]['id']}_{applications[-1]['sending']['id']}",
             )
         )
-
-    keyboard.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
+    if with_back:
+        keyboard.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
+    else:
+        keyboard.row(
+            InlineKeyboardButton(text="❌ Закрыть окно", callback_data="close")
+        )
 
     return keyboard.as_markup()
 

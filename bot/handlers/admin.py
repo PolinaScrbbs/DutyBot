@@ -41,5 +41,5 @@ async def admin_applications(message: Message, state: FSMContext):
             await message.answer(
                 "📋 *Список заявок*",
                 parse_mode="Markdown",
-                reply_markup=await kb.inline_applications(applications),
+                reply_markup=await kb.inline_applications(applications, False),
             )
