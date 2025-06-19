@@ -18,14 +18,26 @@ MEDIA_FOLDER = os.path.join(BASE_DIR, "media")
 
 # Русские названия месяцев для ручного форматирования
 RUSSIAN_MONTHS = [
-    "января", "февраля", "марта", "апреля", "мая", "июня",
-    "июля", "августа", "сентября", "октября", "ноября", "декабря"
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
 ]
+
 
 def format_russian_date(iso_date):
     """Форматирует дату в формате 'день месяц годг.' на русском"""
     date_object = datetime.fromisoformat(iso_date)
     return f"{date_object.day} {RUSSIAN_MONTHS[date_object.month - 1]} {date_object.year}г."
+
 
 @app.route("/profile")
 async def profile():
@@ -40,7 +52,7 @@ async def profile():
             "role": "Студент",
             "created_at": datetime.now().isoformat(),
             "group_id": None,
-            "avatar_url": None
+            "avatar_url": None,
         }
     else:
         status, user = await get_user(username, token)

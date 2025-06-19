@@ -188,9 +188,7 @@ async def get_group_students(
     rows = result.all()
 
     if not rows:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail="В группе нет студентов"
-        )
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="В группе нет студентов")
 
     students_with_duties = []
     for row in rows:

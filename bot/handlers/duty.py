@@ -52,7 +52,10 @@ async def get_attendant(message: Message, state: FSMContext):
         elif status == 200:
             try:
                 try:
-                    user_data["attendants_id"] = [attendants[0]["id"], attendants[1]["id"]]
+                    user_data["attendants_id"] = [
+                        attendants[0]["id"],
+                        attendants[1]["id"],
+                    ]
                     await state.update_data(user_data)
                     await message.edit_text(
                         f"👷🏿 Назначены дежурные:\n*{attendants[0]['full_name']}* и *{attendants[1]['full_name']}*",
